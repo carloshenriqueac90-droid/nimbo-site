@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nimbo — Estúdio de jogos digitais</title>
+<meta name="description" content="Nimbo é um estúdio AI-first de jogos digitais: jogos simples, divertidos e viciantes, feitos com velocidade e criatividade. Uma nuvem, vários jogos por baixo." />
+<meta name="theme-color" content="#10121a" />
+
+<!-- Open Graph / social -->
+<meta property="og:title" content="Nimbo — Estúdio de jogos digitais" />
+<meta property="og:description" content="Uma nuvem, vários jogos por baixo. Estúdio AI-first de jogos simples, divertidos e viciantes." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://nimbo.games" />
+<meta property="og:locale" content="pt_BR" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%235b7fff' d='M9 24a6 6 0 0 1-.6-11.97A8 8 0 0 1 23.6 13.2 5.5 5.5 0 0 1 23 24z'/%3E%3C/svg%3E" />
+
+<style>
+  :root{
+    --bg:#0d0f16;
+    --bg-2:#10121a;
+    --surface:#1b1e2b;
+    --surface-2:#222637;
+    --text:#f2f3f7;
+    --muted:#9598ac;
+    --primary:#5b7fff;
+    --primary-soft:rgba(91,127,255,.14);
+    --border:rgba(255,255,255,.08);
+    --radius:16px;
+    --maxw:1040px;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+
+  /* ---------- focus & selection ---------- */
+  :focus{outline:none;}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:6px;}
+  .skip-link{position:absolute;left:16px;top:-60px;z-index:100;background:var(--primary);color:#0b0d16;
+    padding:10px 16px;border-radius:10px;font-weight:700;font-size:14px;transition:top .15s;}
+  .skip-link:focus{top:16px;outline-color:#fff;}
+  ::selection{background:var(--primary);color:#0b0d16;}
+
+  /* ---------- background sky ---------- */
+  .sky{
+    position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 600px at 70% -10%, rgba(91,127,255,.18), transparent 60%),
+      radial-gradient(900px 500px at 10% 10%, rgba(91,127,255,.08), transparent 55%),
+      linear-gradient(180deg, var(--bg-2), var(--bg));
+  }
+  .stars{position:fixed;inset:0;z-index:-1;opacity:.5;}
+  .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;
+    animation:tw 4s ease-in-out infinite;}
+  @keyframes tw{0%,100%{opacity:.15}50%{opacity:.8}}
+
+  /* ---------- header ---------- */
+  header{position:sticky;top:0;z-index:10;
+    backdrop-filter:blur(10px);
+    background:rgba(13,15,22,.55);
+    border-bottom:1px solid var(--border);}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:66px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:.2px;transition:opacity .15s;}
+  .brand:hover{opacity:.85;}
+  .brand svg{width:30px;height:30px;transition:transform .3s ease;}
+  .brand:hover svg{transform:translateY(-2px);}
+  .nav a.link{position:relative;color:var(--muted);font-size:15px;padding:8px 6px;transition:color .15s;}
+  .nav a.link:hover{color:var(--text);}
+  .nav a.link::after{content:'';position:absolute;left:6px;right:6px;bottom:2px;height:2px;border-radius:2px;
+    background:var(--primary);transform:scaleX(0);transform-origin:left;transition:transform .2s ease;}
+  .nav a.link:hover::after,.nav a.link:focus-visible::after{transform:scaleX(1);}
+  .nav .links{display:flex;gap:18px;align-items:center;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:88px 0 64px;text-align:center;position:relative;}
+  .cloud-hero{width:min(340px,72vw);margin:0 auto 8px;display:block;
+    filter:drop-shadow(0 20px 40px rgba(91,127,255,.25));
+    animation:float 6s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .hero h1{font-size:clamp(34px,6vw,60px);line-height:1.08;margin:.2em 0 .3em;font-weight:800;letter-spacing:-.5px;}
+  .hero h1 .accent{color:var(--primary);}
+  .hero p.sub{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:640px;margin:0 auto 32px;}
+  .cta{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:12px;
+    font-weight:600;font-size:16px;border:1px solid transparent;cursor:pointer;
+    transition:transform .15s ease,background .15s,border-color .15s,box-shadow .15s;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{background:var(--primary);color:#0b0d16;box-shadow:0 4px 14px rgba(91,127,255,.22);}
+  .btn-primary:hover{background:#6f8fff;box-shadow:0 8px 22px rgba(91,127,255,.35);}
+  .btn-ghost{border-color:var(--border);color:var(--text);}
+  .btn-ghost:hover{background:var(--surface);border-color:rgba(91,127,255,.4);}
+
+  /* ---------- sections ---------- */
+  section.block{padding:64px 0;}
+  .eyebrow{color:var(--primary);font-weight:600;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+  h2{font-size:clamp(26px,3.6vw,36px);margin:0 0 14px;font-weight:800;letter-spacing:-.3px;}
+  .lead{color:var(--muted);font-size:18px;max-width:680px;}
+
+  .pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:36px;}
+  .pillar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;
+    transition:transform .18s ease,border-color .18s,background .18s;}
+  .pillar:hover{transform:translateY(-3px);border-color:rgba(91,127,255,.35);background:var(--surface-2);}
+  .pillar .ic{width:40px;height:40px;border-radius:11px;background:var(--primary-soft);display:grid;place-items:center;
+    margin-bottom:14px;font-size:18px;transition:transform .18s ease;}
+  .pillar:hover .ic{transform:scale(1.08);}
+  .pillar h3{margin:0 0 6px;font-size:18px;}
+  .pillar p{margin:0;color:var(--muted);font-size:15px;}
+
+  /* ---------- games ---------- */
+  .games{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:36px;}
+  .game{background:linear-gradient(160deg,var(--surface-2),var(--surface));border:1px solid var(--border);
+    border-radius:var(--radius);padding:26px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s;}
+  .game:hover{transform:translateY(-3px);border-color:rgba(91,127,255,.4);}
+  .game .tag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.5px;
+    padding:4px 10px;border-radius:999px;background:var(--primary-soft);color:var(--primary);margin-bottom:14px;}
+  .game .tag.soon{background:rgba(209,160,33,.16);color:#e5b84a;}
+  .game h3{margin:0 0 6px;font-size:22px;}
+  .game p{color:var(--muted);margin:0 0 18px;font-size:15px;}
+  .game .glyph{position:absolute;right:-20px;bottom:-24px;font-size:120px;opacity:.06;line-height:1;
+    user-select:none;transition:transform .3s ease,opacity .3s ease;}
+  .game:hover .glyph{transform:scale(1.06) rotate(-4deg);opacity:.09;}
+
+  /* ---------- next / process card ---------- */
+  .next-card{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);
+    padding:26px;position:relative;transition:border-color .18s;}
+  .next-card:hover{border-color:rgba(91,127,255,.3);}
+  .next-card .tag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.5px;
+    padding:4px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted);margin-bottom:14px;}
+  .next-card h3{margin:0 0 10px;font-size:20px;}
+  .next-card p{color:var(--muted);margin:0 0 16px;font-size:15px;}
+  .next-card ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;}
+  .next-card li{display:flex;gap:10px;align-items:flex-start;color:var(--muted);font-size:14px;}
+  .next-card li .dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--primary);margin-top:7px;opacity:.8;}
+  .next-card li strong{color:var(--text);font-weight:600;}
+
+  /* ---------- contact ---------- */
+  .contact{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:48px 24px;margin:24px 0;position:relative;overflow:hidden;}
+  .contact::before{content:'';position:absolute;inset:0;
+    background:radial-gradient(500px 220px at 50% 0%,rgba(91,127,255,.12),transparent 70%);pointer-events:none;}
+  .contact h2{margin-bottom:8px;}
+  .contact a.mail{color:var(--primary);font-weight:600;font-size:18px;display:inline-flex;align-items:center;gap:6px;
+    padding:4px 2px;border-radius:6px;transition:color .15s;position:relative;}
+  .contact a.mail:hover{color:#8aa3ff;}
+  .contact a.mail svg{width:16px;height:16px;transition:transform .15s ease;}
+  .contact a.mail:hover svg{transform:translate(2px,-2px);}
+
+  footer{border-top:1px solid var(--border);padding:32px 0;color:var(--muted);font-size:14px;}
+  .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center;}
+  .foot a{transition:color .15s;}
+  .foot a:hover{color:var(--text);}
+
+  @media(max-width:560px){
+    .nav .links{gap:12px;}
+    .nav a.link.hide-sm{display:none;}
+    .hero{padding:56px 0 40px;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}
+    .cloud-hero,.star{animation:none;}
+    .btn:hover,.pillar:hover,.game:hover,.brand:hover svg{transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#top">Pular para o conteúdo</a>
+
+<div class="sky" aria-hidden="true"></div>
+<div class="stars" id="stars" aria-hidden="true"></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Nimbo — página inicial">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#5b7fff" d="M9 24a6 6 0 0 1-.6-11.97A8 8 0 0 1 23.6 13.2 5.5 5.5 0 0 1 23 24z"/></svg>
+      Nimbo
+    </a>
+    <nav class="links" aria-label="Navegação principal">
+      <a class="link hide-sm" href="#jogos">Jogos</a>
+      <a class="link hide-sm" href="#estudio">Estúdio</a>
+      <a class="link" href="#contato">Contato</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <svg class="cloud-hero" viewBox="0 0 300 170" role="img" aria-label="Uma nuvem estilizada com pequenos jogos por baixo">
+        <defs>
+          <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#7f9dff"/>
+            <stop offset="1" stop-color="#5b7fff"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#cg)" d="M78 118a34 34 0 0 1-3.4-67.8A46 46 0 0 1 162 62a31 31 0 0 1 44 8 30 30 0 0 1-4 48z"/>
+        <!-- gotinhas / jogos por baixo -->
+        <circle cx="96"  cy="140" r="7" fill="#5b7fff" opacity=".85"/>
+        <circle cx="132" cy="150" r="9" fill="#7f9dff" opacity=".7"/>
+        <circle cx="170" cy="141" r="7" fill="#5b7fff" opacity=".85"/>
+        <circle cx="204" cy="149" r="6" fill="#7f9dff" opacity=".6"/>
+      </svg>
+      <h1>Uma nuvem.<br><span class="accent">Vários jogos</span> por baixo.</h1>
+      <p class="sub">A Nimbo é um estúdio <strong>AI-first</strong> de jogos digitais: simples de aprender, difíceis de largar. Feitos com criatividade, velocidade e obsessão por diversão.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#jogos">Ver os jogos</a>
+        <a class="btn btn-ghost" href="#estudio">Sobre o estúdio</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESTÚDIO -->
+  <section class="block" id="estudio">
+    <div class="wrap">
+      <div class="eyebrow">O estúdio</div>
+      <h2>Jogos leves. Ambição alta.</h2>
+      <p class="lead">Acreditamos que os melhores jogos não precisam ser os maiores. A Nimbo cria jogos de baixa e média complexidade — do tipo que você abre por trinta segundos e continua pensando o resto do dia — operando enxuto e rápido, com inteligência de ponta a ponta.</p>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="ic" aria-hidden="true">⚡</div>
+          <h3>Velocidade</h3>
+          <p>Da ideia ao jogável em dias, não meses. Iteramos rápido e cortamos o que não diverte.</p>
+        </div>
+        <div class="pillar">
+          <div class="ic" aria-hidden="true">🎯</div>
+          <h3>Diversão em primeiro lugar</h3>
+          <p>Cada mecânica passa por um teste único: dá vontade de jogar de novo? Se não, refazemos.</p>
+        </div>
+        <div class="pillar">
+          <div class="ic" aria-hidden="true">☁️</div>
+          <h3>Uma nuvem, um padrão</h3>
+          <p>Nimbo é a nuvem — cada jogo é uma gota. Cada gota nova segue a mesma barra de qualidade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOGOS -->
+  <section class="block" id="jogos">
+    <div class="wrap">
+      <div class="eyebrow">Nossos jogos</div>
+      <h2>O que está saindo da nuvem</h2>
+      <div class="games">
+        <article class="game">
+          <span class="tag soon">Em breve</span>
+          <h3>Ordem Secreta</h3>
+          <p>Um quebra-cabeça diário de dedução: descubra a ordem oculta por trás de fatos que parecem soltos. Um desafio novo todo dia.</p>
+          <a class="btn btn-primary" href="mailto:contato@nimbo.games?subject=Quero%20saber%20quando%20o%20Ordem%20Secreta%20lan%C3%A7ar&body=Oi%2C%20Nimbo!%20Quero%20ser%20avisado%20quando%20o%20Ordem%20Secreta%20estiver%20no%20ar." aria-label="Enviar e-mail para ser avisado quando Ordem Secreta lançar">Quero ser avisado</a>
+          <span class="glyph" aria-hidden="true">🔎</span>
+        </article>
+
+        <article class="next-card" aria-labelledby="next-h">
+          <span class="tag">Como escolhemos o próximo</span>
+          <h3 id="next-h">Ainda não escalamos o portfólio</h3>
+          <p>Sendo direto: hoje o time inteiro está focado em lançar bem o Ordem Secreta. O próximo jogo só entra em produção depois disso — sem promessa de data.</p>
+          <ul>
+            <li><span class="dot" aria-hidden="true"></span> <span><strong>Critério:</strong> baixa/média complexidade, alta rejogabilidade.</span></li>
+            <li><span class="dot" aria-hidden="true"></span> <span><strong>Processo:</strong> validado com dados reais do primeiro jogo antes de escolher o segundo.</span></li>
+            <li><span class="dot" aria-hidden="true"></span> <span><strong>Marca:</strong> mesma nuvem, qualidade constante — sem pressa por volume.</span></li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTATO -->
+  <section class="block" id="contato">
+    <div class="wrap">
+      <div class="contact">
+        <h2>Vamos conversar</h2>
+        <p class="lead" style="margin:0 auto 16px;">Imprensa, parcerias ou só um oi. A nuvem responde — sem formulário, sem lista de espera, é e-mail direto mesmo.</p>
+        <a class="mail" href="mailto:contato@nimbo.games">
+          contato@nimbo.games
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>© <span id="yr">2026</span> Nimbo · Estúdio de jogos digitais</div>
+    <div>Feito com criatividade na nuvem ☁️</div>
+  </div>
+</footer>
+
+<script>
+  // ano dinâmico
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  // estrelinhas do fundo (geradas, leves)
+  (function(){
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var box = document.getElementById('stars'), n = 46, html = '';
+    for (var i=0;i<n;i++){
+      var x=Math.random()*100, y=Math.random()*70, d=(Math.random()*4).toFixed(2), s=(Math.random()*1.5+0.5).toFixed(1);
+      html += '<span class="star" style="left:'+x+'%;top:'+y+'%;width:'+s+'px;height:'+s+'px;animation-delay:'+d+'s"></span>';
+    }
+    box.innerHTML = html;
+  })();
+</script>
+</body>
+</html>
