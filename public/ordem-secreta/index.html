@@ -26,10 +26,20 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://nimbo.games/ordem-secreta/og-image.png" />
 
-    <script type="module" crossorigin src="/ordem-secreta/assets/index-Be9VP7N1.js"></script>
-    <link rel="stylesheet" crossorigin href="/ordem-secreta/assets/index-DAJWZcsK.css">
+    <script type="module" crossorigin src="/ordem-secreta/assets/index-Bl0WXwDX.js"></script>
+    <link rel="stylesheet" crossorigin href="/ordem-secreta/assets/index-BLcylLec.css">
   </head>
   <body>
+    <!--
+      Fora do #app de propósito: o contêiner do jogo (desktop, ver style.css)
+      é um card fechado, e as telas internas usam `.screen-enter` (animação
+      de entrada com `transform`, fill-mode `both`), o que cria um novo
+      containing block e quebraria `position: fixed` para qualquer link
+      injetado dentro dele. Ficando aqui, como irmão de `#app`, o botão
+      sempre se posiciona em relação ao viewport de verdade. `aria-label` é
+      preenchido pelo main.ts (i18n) antes do primeiro paint útil.
+    -->
+    <a class="home-link" href="https://nimbo.games/" id="home-link"></a>
     <div id="app"></div>
   </body>
 </html>
