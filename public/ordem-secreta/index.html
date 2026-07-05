@@ -2,7 +2,11 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- SEM viewport-fit=cover de propósito: no Android com 3 botões o env(safe-area-inset-bottom)
+         costuma reportar 0, então "cover" jogava o conteúdo (Confirmar/tentativas) para baixo da
+         barra do sistema e cortava. Sem cover, o navegador mantém o viewport ACIMA das barras do
+         sistema (100dvh = área segura), resolvendo o corte de forma independente de env(). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ordem Secreta</title>
 
     <!--
@@ -26,8 +30,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://nimbo.games/ordem-secreta/og-image.png" />
 
-    <script type="module" crossorigin src="/ordem-secreta/assets/index-DmOdVhXb.js"></script>
-    <link rel="stylesheet" crossorigin href="/ordem-secreta/assets/index-BQiK307b.css">
+    <script type="module" crossorigin src="/ordem-secreta/assets/index-HP74RBJk.js"></script>
+    <link rel="stylesheet" crossorigin href="/ordem-secreta/assets/index-B5v6jKBm.css">
   </head>
   <body>
     <div id="app"></div>
