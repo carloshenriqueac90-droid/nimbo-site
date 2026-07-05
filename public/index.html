@@ -117,7 +117,7 @@
     font-weight:700;font-size:16px;border:2px solid transparent;cursor:pointer;
     transition:transform .18s cubic-bezier(.34,1.56,.64,1),background .15s,border-color .15s,box-shadow .15s;}
   .btn:hover{transform:translateY(-3px) scale(1.03);}
-  .btn:active{transform:translateY(0) scale(.98);}
+  .btn:active{transform:scale(.96);transition-timing-function:cubic-bezier(.34,1.56,.64,1);}
   .btn-primary{background:var(--sun);color:#20180a;box-shadow:0 6px 18px rgba(255,196,77,.28);}
   .btn-primary:hover{background:#ffd066;box-shadow:0 10px 26px rgba(255,196,77,.4);}
   .btn-ghost{border-color:var(--border);color:var(--text);}
@@ -180,6 +180,18 @@
   .contact a.mail svg{width:16px;height:16px;transition:transform .15s ease;}
   .contact a.mail:hover svg{transform:translate(2px,-2px);}
 
+  /* ---------- nuvem discreta no rodapé/contato ---------- */
+  .cloud-peek{position:fixed;right:18px;bottom:18px;width:52px;z-index:5;
+    opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;
+    transition:opacity .4s ease,transform .4s cubic-bezier(.34,1.56,.64,1);}
+  .cloud-peek.show{opacity:1;transform:translateY(0) scale(1);}
+  .cloud-peek svg{width:100%;display:block;filter:drop-shadow(0 8px 16px rgba(109,139,255,.35));}
+  .cloud-peek .cloud-hint{position:absolute;right:calc(100% + 10px);bottom:8px;white-space:nowrap;
+    background:var(--surface);border:1px solid var(--border);padding:6px 12px;border-radius:12px;
+    font-size:13px;color:var(--muted);margin:0;opacity:0;transition:opacity .3s ease .1s;}
+  .cloud-peek.show .cloud-hint{opacity:.95;}
+  @media(max-width:560px){.cloud-peek{width:42px;right:12px;bottom:12px;}}
+
   footer{border-top:1px solid var(--border);padding:32px 0;color:var(--muted);font-size:14px;}
   .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center;}
   .foot a{transition:color .15s;}
@@ -194,6 +206,9 @@
     *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}
     .cloud-hero,.star,.drop{animation:none;}
     .btn:hover,.pillar:hover,.game:hover,.brand:hover svg,.contact a.mail:hover{transform:none;}
+    .btn:active{transform:none;}
+    .cloud-peek{transition:opacity .15s ease;transform:none;}
+    .cloud-peek.show{transform:none;}
   }
 </style>
 </head>
@@ -305,8 +320,8 @@
 
         <article class="next-card" aria-labelledby="next-h">
           <span class="tag">Como escolhemos o próximo</span>
-          <h3 id="next-h">Ainda não escalamos o portfólio</h3>
-          <p>Sendo direto: hoje o time inteiro está de olho no lançamento do Ordem Secreta. O próximo jogo só entra em produção depois disso — sem promessa de data, sem enrolação.</p>
+          <h3 id="next-h">Aqui ainda só pinga uma gota</h3>
+          <p>A nuvem está concentrada numa gota só. Quando a próxima cair, ela pinga bem aqui — sem promessa de data, sem enrolação.</p>
           <ul>
             <li><span class="dot" aria-hidden="true"></span> <span><strong>Critério:</strong> baixa/média complexidade, alta rejogabilidade.</span></li>
             <li><span class="dot" aria-hidden="true"></span> <span><strong>Processo:</strong> validado com dados reais do primeiro jogo antes de escolher o segundo.</span></li>
@@ -332,6 +347,20 @@
   </section>
 
 </main>
+
+<div class="cloud-peek" id="cloudPeek" aria-hidden="true">
+  <span class="cloud-hint" id="peekHint">ainda por aqui? 👀</span>
+  <svg viewBox="0 0 300 170">
+    <path fill="url(#cg)" d="M78 118a34 34 0 0 1-3.4-67.8A46 46 0 0 1 162 62a31 31 0 0 1 44 8 30 30 0 0 1-4 48z"/>
+    <g>
+      <circle cx="112" cy="82" r="10" fill="#20182f"/>
+      <circle cx="152" cy="82" r="10" fill="#20182f"/>
+      <circle id="eyeLPeek" cx="114" cy="80" r="3.4" fill="#fff"/>
+      <circle id="eyeRPeek" cx="154" cy="80" r="3.4" fill="#fff"/>
+      <path d="M120 98 q12 10 24 0" stroke="#20182f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
 
 <footer>
   <div class="wrap foot">
@@ -454,6 +483,80 @@
     cloud.addEventListener('click', react);
     cloud.addEventListener('keydown', function(e){
       if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); react(); }
+    });
+  })();
+
+  // nuvem "nota" o visitante perto do fim da página — mini-avatar discreto no canto
+  (function(){
+    var contato = document.getElementById('contato');
+    var peek = document.getElementById('cloudPeek');
+    if (!contato || !peek) return;
+    var shown = false, hideTimer;
+
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && !shown){
+          shown = true;
+          peek.classList.add('show');
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(function(){ peek.classList.remove('show'); }, 5000);
+        }
+      });
+    }, { threshold: 0.4 });
+    io.observe(contato);
+
+    // olhinhos do mini-avatar seguem o cursor também, reaproveitando a mesma lógica
+    if (!reduceMotion){
+      var eyeL = document.getElementById('eyeLPeek'), eyeR = document.getElementById('eyeRPeek');
+      if (eyeL && eyeR){
+        var baseL = {x:114,y:80}, baseR = {x:154,y:80}, range = 2.2;
+        window.addEventListener('pointermove', function(e){
+          if (!peek.classList.contains('show')) return;
+          var rect = peek.getBoundingClientRect();
+          var cx = rect.left + rect.width*0.44, cy = rect.top + rect.height*0.48;
+          var dx = e.clientX - cx, dy = e.clientY - cy;
+          var dist = Math.max(Math.hypot(dx,dy), 1);
+          var nx = (dx/dist)*range, ny = (dy/dist)*range;
+          eyeL.setAttribute('cx', baseL.x + nx); eyeL.setAttribute('cy', baseL.y + ny);
+          eyeR.setAttribute('cx', baseR.x + nx); eyeR.setAttribute('cy', baseR.y + ny);
+        }, {passive:true});
+      }
+    }
+  })();
+
+  // aba em background vira easter egg discreto (título + favicon)
+  (function(){
+    var originalTitle = document.title;
+    var iconLink = document.querySelector('link[rel="icon"]');
+    var originalIcon = iconLink ? iconLink.getAttribute('href') : null;
+    var awayIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23ffc44d' d='M9 24a6 6 0 0 1-.6-11.97A8 8 0 0 1 23.6 13.2 5.5 5.5 0 0 1 23 24z'/%3E%3C/svg%3E";
+
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden){
+        document.title = '☁️ volta aqui!';
+        if (iconLink) iconLink.setAttribute('href', awayIcon);
+      } else {
+        document.title = originalTitle;
+        if (iconLink && originalIcon) iconLink.setAttribute('href', originalIcon);
+      }
+    });
+  })();
+
+  // glyph do card "Ordem Secreta" dá um shuffle no hover — sugere a mecânica de reordenar
+  (function(){
+    var game = document.querySelector('.game');
+    var glyph = game ? game.querySelector('.glyph') : null;
+    if (!game || !glyph || reduceMotion) return;
+    var original = glyph.textContent, timer;
+
+    game.addEventListener('mouseenter', function(){
+      clearTimeout(timer);
+      glyph.textContent = '🔀';
+      timer = setTimeout(function(){ glyph.textContent = original; }, 400);
+    });
+    game.addEventListener('mouseleave', function(){
+      clearTimeout(timer);
+      glyph.textContent = original;
     });
   })();
 </script>
