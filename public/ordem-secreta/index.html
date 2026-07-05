@@ -26,8 +26,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://nimbo.games/ordem-secreta/og-image.png" />
 
-    <script type="module" crossorigin src="/ordem-secreta/assets/index-CZb14gyj.js"></script>
-    <link rel="stylesheet" crossorigin href="/ordem-secreta/assets/index-D4XAEvNZ.css">
+    <script type="module" crossorigin src="/ordem-secreta/assets/index-C_p_Hm31.js"></script>
+    <link rel="stylesheet" crossorigin href="/ordem-secreta/assets/index-DEYvJKOT.css">
   </head>
   <body>
     <!--
@@ -36,10 +36,16 @@
       de entrada com `transform`, fill-mode `both`), o que cria um novo
       containing block e quebraria `position: fixed` para qualquer link
       injetado dentro dele. Ficando aqui, como irmão de `#app`, o botão
-      sempre se posiciona em relação ao viewport de verdade. `aria-label` é
-      preenchido pelo main.ts (i18n) antes do primeiro paint útil.
+      sempre se posiciona em relação ao viewport de verdade — mas em
+      desktop a POSIÇÃO (não o parentesco) é calculada a partir do card
+      (ver `.home-link` em style.css), pra ficar "colado" nele em vez de
+      solto num canto distante. Conteúdo (seta + "Nimbo") é preenchido pelo
+      main.ts (i18n) antes do primeiro paint útil — feedback do CEO: um
+      ícone sozinho não deixava claro que o alvo era "voltar ao site".
     -->
-    <a class="home-link" href="https://nimbo.games/" id="home-link"></a>
+    <a class="home-link" href="https://nimbo.games/" id="home-link">
+      <span class="home-link__arrow" aria-hidden="true">‹</span><span class="home-link__text">Nimbo</span>
+    </a>
     <div id="app"></div>
   </body>
 </html>
