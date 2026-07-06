@@ -1,23 +1,26 @@
-# Site institucional da Nimbo (`nimbo.games`)
+# Site da Nimbo (`nimbo.games`)
 
-Landing estática da marca-mãe. **Zero build**: é um único `index.html` self-contained
-(CSS e SVG inline). Deploy trivial e gratuito.
+Site estático da marca + portfólio de jogos, servido pela pasta `public/`. Deploy automático
+no Cloudflare Pages a cada push na `main`.
 
 ## Estrutura
-- `index.html` — a landing inteira (marca, estúdio, jogos, contato).
-- `_headers` — cabeçalhos de segurança/cache (Cloudflare Pages / Netlify).
-- `README.md` — este arquivo.
+- `public/index.html` — landing da marca (CSS e SVG inline, self-contained).
+- `public/<jogo>/` — cada jogo é uma subpasta (ex.: `public/ordem-secreta/` → `nimbo.games/ordem-secreta`).
+- `public/_headers` — cabeçalhos de segurança/cache.
+- `functions/` — Cloudflare Pages Functions (ex.: proxy de analytics first-party).
+- `PUBLICAR-JOGO.md` — como publicar um jogo novo no site.
 
-## Deploy recomendado — Cloudflare Pages (grátis)
-1. Cloudflare Dashboard → **Pages** → *Create a project* → *Connect to Git* (ou upload direto da pasta `site/`).
-2. Build command: **(vazio)** · Output directory: **`/`** (ou `site` se conectar o repo inteiro).
-3. Custom domain: **`nimbo.games`**. Requer transferir/gerenciar o DNS na Cloudflare
-   (ver D19 — transferir o domínio da Hostinger antes de jul/2027).
-4. E-mail: ativar **Email Routing** grátis → encaminhar `contato@nimbo.games` para o e-mail do CEO.
+## Deploy — Cloudflare Pages
+- Conectado ao repositório. **Build command:** vazio · **Output directory:** `public`.
+- Push na `main` → produção em `nimbo.games`.
+- Qualquer outra branch → preview automático em `*.nimbo-site.pages.dev` (isolado da produção).
+- Domínio e e-mail (`contato@nimbo.games`, via Email Routing) são gerenciados na Cloudflare.
 
-## Arquitetura de domínio (D19)
-- `nimbo.games` — marca-mãe (este site).
-- `ordemsecreta.nimbo.games` — o jogo Ordem Secreta (subdomínio), publicado à parte no Gate 3.
+## Arquitetura de domínio
+- `nimbo.games` — site da marca, com os jogos em subpasta (`nimbo.games/<jogo>`).
 
 ## Preview local
-Qualquer servidor estático serve. Ex.: `npx serve site` ou `python -m http.server -d site 4321`.
+Qualquer servidor estático serve. Ex.: `npx serve public` ou `python -m http.server -d public 4321`.
+
+## Publicar um jogo
+Ver [`PUBLICAR-JOGO.md`](PUBLICAR-JOGO.md).

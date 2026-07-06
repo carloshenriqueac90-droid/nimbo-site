@@ -66,5 +66,5 @@ Você **não** consegue publicar direto na produção — é sempre via PR. Isso
 que já estão no ar (o seu e os dos outros).
 
 ## Dúvidas
-Fale com o COO da Nimbo (via CEO). O que precisar de decisão — nome da pasta, marca no
+Fale com a equipe da Nimbo. O que precisar de decisão — nome da pasta, marca no
 rodapé, etc. — a gente alinha no PR.

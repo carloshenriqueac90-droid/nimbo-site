@@ -1,5 +1,5 @@
 /**
- * Reverse proxy do PostHog (D23 / anti-adblock). Roteia o analytics pelo PRÓPRIO domínio
+ * Reverse proxy do PostHog. Roteia o analytics pelo PRÓPRIO domínio
  * (`nimbo.games/ingest/*`, first-party) em vez de `eu.i.posthog.com` — assim bloqueadores de
  * anúncio não derrubam 10-25% dos eventos (retenção/share medem melhor).
  *
