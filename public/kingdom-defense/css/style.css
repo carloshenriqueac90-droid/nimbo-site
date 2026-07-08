@@ -1,0 +1,251 @@
+/* Kingdom Defense — layout mobile-first */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%;
+  background: #1c2418;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#jogo {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#tela { display: block; }
+
+/* ---------- HUD superior ---------- */
+#hud-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: calc(6px + env(safe-area-inset-top)) 8px 6px;
+  pointer-events: none;
+  flex-wrap: wrap;
+}
+.icone-hud { width: 18px; height: 18px; object-fit: contain; }
+.icone-inline { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
+.chip {
+  background: rgba(12, 18, 10, 0.82);
+  color: #f2ead8;
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+#chip-onda { margin-left: auto; }
+#btnMudo {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  pointer-events: auto;
+  min-height: 32px;
+  min-width: 32px;
+}
+#btnMudo:active { transform: scale(0.94); }
+#sliderVolume {
+  pointer-events: auto;
+  width: 76px;
+  accent-color: #6fcf4f;
+  cursor: pointer;
+}
+#barra-onda-fundo {
+  flex-basis: 100%;
+  height: 5px;
+  background: rgba(12, 18, 10, 0.7);
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 320px;
+  margin: 0 auto;
+}
+#barraOnda {
+  height: 100%;
+  width: 0%;
+  background: #6fcf4f;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+/* ---------- HUD inferior ---------- */
+#hud-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+  justify-content: center;
+  flex-wrap: wrap;
+  background: linear-gradient(transparent, rgba(10, 14, 8, 0.75));
+}
+#hud-bottom button {
+  min-height: 46px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #2c3a24;
+  color: #f2ead8;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#hud-bottom button:active:not(:disabled) { transform: scale(0.96); }
+#hud-bottom button:disabled { opacity: 0.4; cursor: default; }
+#btnOnda { background: #3d6a2e; }
+#btnRecuar { background: #7a3b2e; }
+#btnRecuar.alerta { animation: pulsar 0.8s infinite alternate; }
+#btnRetomar { background: #2e5d7a; }
+@keyframes pulsar {
+  from { box-shadow: 0 0 0 0 rgba(255, 90, 60, 0.9); }
+  to { box-shadow: 0 0 0 9px rgba(255, 90, 60, 0); }
+}
+
+/* ---------- Menu de contexto ---------- */
+#menuContexto {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(16, 22, 12, 0.96);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 190px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+.item-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 9px 12px;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: #2c3a24;
+  color: #f2ead8;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.item-menu small { font-weight: 400; opacity: 0.75; font-size: 12px; }
+.item-menu:active:not(:disabled) { background: #3d5230; }
+.item-menu:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 22, 12, 0.92);
+  color: #ffe9a8;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 25;
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  transition: opacity 0.3s;
+}
+.toast.perigo { color: #ff8a7a; border-color: rgba(255, 90, 60, 0.5); }
+.toast.oculto { opacity: 0; }
+
+/* ---------- Overlay (início / fim) ---------- */
+#overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 8, 0.85);
+  padding: 16px;
+}
+.painel {
+  background: #212c19;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  border-radius: 16px;
+  padding: 22px 24px;
+  max-width: 420px;
+  width: 100%;
+  color: #f2ead8;
+  text-align: center;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.painel h1 { margin: 0 0 4px; font-size: 26px; color: #ffd166; }
+.painel h2 { margin: 0 0 12px; font-size: 15px; font-weight: 400; opacity: 0.8; }
+.painel ul { text-align: left; font-size: 14px; line-height: 1.55; padding-left: 20px; margin: 10px 0 16px; }
+.painel .recorde { font-size: 13px; opacity: 0.75; margin-bottom: 12px; }
+.painel .rotulo-mapa { font-size: 13px; opacity: 0.8; margin: 4px 0 8px; text-align: left; }
+.mapas { display: flex; gap: 10px; margin-bottom: 16px; }
+.card-mapa {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  min-height: 76px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: #2c3a24;
+  color: #f2ead8;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.card-mapa.ativo { border-color: #ffd166; background: #3d5230; }
+.card-mapa:active { transform: scale(0.96); }
+.card-icone { font-size: 28px; }
+.card-nome { font-size: 13px; font-weight: 700; }
+.painel button {
+  min-height: 50px;
+  width: 100%;
+  border-radius: 12px;
+  border: none;
+  background: #3d6a2e;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.painel button:active { transform: scale(0.97); }
+
+.oculto { display: none !important; }
+
+/* ---------- Dica de rotação ---------- */
+#dica-girar {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  z-index: 20;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  #dica-girar { display: block; }
+}
