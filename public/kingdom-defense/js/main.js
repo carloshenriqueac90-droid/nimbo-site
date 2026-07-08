@@ -21,7 +21,7 @@ import { iniciarAudio, tocar, mutado, alternarMudo, obterVolume, definirVolume }
 const state = {
   fase: 'inicio', // inicio | preparo | onda | derrota | vitoria
   vidas: JOGO.vidas,
-  ouro: JOGO.ouroInicial,
+  ouro: MAPA_IDX === 1 ? JOGO.ouroInicial * 2 : JOGO.ouroInicial,  // 2º nível começa com o dobro de ouro
   madeira: JOGO.madeiraInicial,
   onda: 0,             // última onda iniciada (1..10)
   tPreparo: JOGO.tempoPreparoInicial,
