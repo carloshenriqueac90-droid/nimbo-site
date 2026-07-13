@@ -291,7 +291,7 @@ body.tom-dificil .brasas span { box-shadow: 0 0 7px var(--fogo1); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 28px; /* entre blocos de modo — maior que o gap botão↔legenda (`.modo-bloco`) p/ manter o agrupamento */
   width: 100%;
   max-width: 380px;
 }
@@ -300,7 +300,10 @@ body.tom-dificil .brasas span { box-shadow: 0 0 7px var(--fogo1); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px; /* respiro entre o botão e a legenda/selo (ranqueada / treino) */
+  /* Respiro entre o botão e a legenda/selo (ranqueada / treino) — a legenda NUNCA pode ficar
+     colada no botão (padrão da empresa "Respiro botão↔legenda", ver Livro). Fica MENOR que o gap
+     entre blocos (`.inicio-modos`) para a legenda agrupar com o SEU botão, não com o próximo. */
+  gap: 20px;
   width: 100%;
 }
 
@@ -817,7 +820,7 @@ main {
 
   /* botões de modo no celular: padding/fonte menores p/ o rótulo de "continuar" (mais longo, com
      o nome do modo) caber numa linha só a 360px, sem 🔥 nem texto quebrando/estourando */
-  .inicio-modos { gap: 16px; }
+  .inicio-modos { gap: 24px; } /* respiro entre blocos no celular (> gap botão↔legenda de 20px) */
   .botao-fogo { padding: 15px 18px; font-size: 1.02rem; letter-spacing: 0.02em; }
   .botao-fantasma.botao-livre { padding: 13px 16px; font-size: 0.98rem; }
   .modo-legenda { font-size: 0.76rem; }
