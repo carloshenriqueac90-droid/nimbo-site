@@ -209,18 +209,21 @@
   .cloud-guide{position:fixed;right:28px;bottom:28px;width:112px;z-index:5;
     opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;
     transition:opacity .4s ease,transform .4s cubic-bezier(.34,1.56,.64,1);}
-  .cloud-guide.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;cursor:pointer;}
+  .cloud-guide.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
   .cloud-guide.hop{animation:guideHop 1.1s cubic-bezier(.34,1.56,.64,1) infinite;}
   @keyframes guideHop{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-10px) scale(1.02,.97)}50%{transform:translateY(0) scale(.97,1.03)}}
-  .cloud-guide svg{width:100%;display:block;filter:drop-shadow(0 10px 22px rgba(109,139,255,.4));transition:filter .2s ease,transform .2s ease;}
-  .cloud-guide.show:hover svg,.cloud-guide.show:focus-visible svg{filter:drop-shadow(0 16px 30px rgba(109,139,255,.55));transform:scale(1.05);}
-  .cloud-guide:focus-visible{outline:none;}
-  .cloud-guide.show:focus-visible .guide-bubble{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,139,255,.35),0 6px 18px rgba(20,20,40,.12);}
+  .cloud-guide svg{width:100%;display:block;filter:drop-shadow(0 10px 22px rgba(109,139,255,.4));}
+  /* o BALÃO de texto é o link clicável (não a nuvem) */
   .cloud-guide .guide-bubble{position:absolute;right:calc(100% + 14px);bottom:14px;white-space:nowrap;
+    text-decoration:none;cursor:pointer;
     background:var(--surface);border:1px solid var(--border);padding:8px 16px;border-radius:14px;
-    font-size:14px;font-weight:600;color:var(--text);margin:0;opacity:0;transition:opacity .3s ease .1s;
+    font-size:14px;font-weight:600;color:var(--text);margin:0;opacity:0;
+    transition:opacity .3s ease .1s,transform .18s ease,border-color .18s ease,box-shadow .18s ease;
     box-shadow:0 6px 18px rgba(20,20,40,.12);pointer-events:none;}
-  .cloud-guide.show .guide-bubble{opacity:1;}
+  .cloud-guide.show .guide-bubble{opacity:1;pointer-events:auto;}
+  .cloud-guide.show .guide-bubble:hover,.cloud-guide.show .guide-bubble:focus-visible{
+    transform:translateY(-2px);border-color:var(--accent);color:var(--accent);outline:none;
+    box-shadow:0 0 0 3px rgba(109,139,255,.28),0 10px 22px rgba(20,20,40,.16);}
   .cloud-guide .guide-dismiss{position:absolute;left:-10px;top:-10px;width:26px;height:26px;border-radius:50%;
     background:var(--surface-2);border:1px solid var(--border);color:var(--muted);font-size:15px;line-height:1;
     display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .2s ease;pointer-events:none;}
@@ -494,9 +497,9 @@
 </main>
 
 <!-- mascote-guia: absorve o antigo .cloud-peek. Acompanha a rolagem, muda de mood por seção. -->
-<div class="cloud-guide" id="cloudGuide" role="button" tabindex="0" aria-label="Sugestão da nuvem">
+<div class="cloud-guide" id="cloudGuide">
   <button class="guide-dismiss" id="guideDismiss" type="button" aria-label="Esconder a nuvem-guia">×</button>
-  <span class="guide-bubble" id="guideBubble" aria-hidden="true"></span>
+  <a class="guide-bubble" id="guideBubble" href="#jogos"></a>
   <svg viewBox="0 0 300 170" aria-hidden="true">
     <path fill="url(#cg)" d="M78 118a34 34 0 0 1-3.4-67.8A46 46 0 0 1 162 62a31 31 0 0 1 44 8 30 30 0 0 1-4 48z"/>
     <g id="guideFace">
@@ -698,9 +701,6 @@
     ];
     var game = GAMES[new Date().getHours() % GAMES.length];
 
-    // alvo atual do clique na nuvem — atualizado conforme a seção visível
-    var currentAction = null;
-    function goTo(url){ window.location.href = url; }
     function scrollToId(id){ var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' }); }
 
     function reveal(){
@@ -709,17 +709,14 @@
     }
 
     // seções que o guia observa, na ordem em que aparecem na página.
-    // cada uma define o que acontece ao clicar/apertar Enter na nuvem.
+    // cada uma define o LINK do balão de sugestão (o texto é o clicável).
     var sections = [
       { el: document.getElementById('estudio'), mood: 'happy',
-        text: 'diversão em 1º lugar ✨', aria: 'Ver os jogos da Nimbo',
-        action: function(){ scrollToId('jogos'); } },
+        text: 'diversão em 1º lugar ✨', href: '#jogos' },
       { el: document.querySelector('.game'), mood: 'hop',
-        text: 'joga o ' + game.label + '! ' + game.emoji, aria: 'Jogar ' + game.label,
-        action: function(){ goTo(game.href); } },
+        text: 'joga o ' + game.label + '! ' + game.emoji, href: game.href },
       { el: document.getElementById('contato'), mood: 'wave',
-        text: 'manda um oi: contato@nimbo.games ☁️', aria: 'Enviar e-mail para contato@nimbo.games',
-        action: function(){ goTo('mailto:contato@nimbo.games'); } }
+        text: 'manda um oi: contato@nimbo.games ☁️', href: 'mailto:contato@nimbo.games' }
     ].filter(function(s){ return !!s.el; });
 
     if (!sections.length) return;
@@ -746,23 +743,21 @@
       reveal();
       setMood(winner.mood);
       say(winner.text);
-      currentAction = winner.action;
-      guide.setAttribute('aria-label', winner.aria);
+      if (bubble) bubble.setAttribute('href', winner.href);
     }, { threshold: 0.4 });
     sections.forEach(function(s){ io.observe(s.el); });
 
-    // clique / Enter / Espaço na nuvem → executa a ação da seção visível
-    function trigger(){ if (currentAction && guide.classList.contains('show')) currentAction(); }
-    guide.addEventListener('click', function(e){
-      if (dismissBtn && (e.target === dismissBtn || dismissBtn.contains(e.target))) return;
-      trigger();
-    });
-    guide.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){
-        e.preventDefault();
-        trigger();
-      }
-    });
+    // o balão é um <a> nativo: jogo e e-mail funcionam sozinhos. Só interceptamos
+    // âncoras (#jogos) pra rolar suave em vez do salto padrão.
+    if (bubble){
+      bubble.addEventListener('click', function(e){
+        var href = bubble.getAttribute('href') || '';
+        if (href.charAt(0) === '#'){
+          var target = document.getElementById(href.slice(1));
+          if (target){ e.preventDefault(); scrollToId(href.slice(1)); }
+        }
+      });
+    }
 
     // some de volta ao topo do hero — evita concorrer com a nuvem principal
     var heroIo = new IntersectionObserver(function(entries){
