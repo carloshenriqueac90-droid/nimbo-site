@@ -700,10 +700,10 @@
 
     if (!sections.length) return;
 
-    // .game e .next-card ficam lado a lado no mesmo grid — em telas largas os dois
-    // podem estar >=40% visíveis ao mesmo tempo. Pra não flicker entre dois moods no
-    // mesmo lote de entries, prioriza sempre a seção mais "avançada" (última da lista
-    // que está intersectando), lendo o estado atual de todas via getBoundingClientRect.
+    // várias seções observadas podem estar >=40% visíveis ao mesmo tempo em telas
+    // largas. Pra não flicker entre dois moods no mesmo lote de entries, prioriza
+    // sempre a seção mais "avançada" (última da lista que está intersectando),
+    // lendo o estado atual de todas via getBoundingClientRect.
     function currentlyVisible(el, threshold){
       var r = el.getBoundingClientRect();
       var vh = window.innerHeight || document.documentElement.clientHeight;
