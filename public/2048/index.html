@@ -59,12 +59,15 @@
 
   /* ======== Cabeçalho ======== */
   header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* nuvem | título centralizado | ajuda */
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     margin-bottom: 14px;
   }
+  header .brand__cloud { justify-self: start; }
+  header h1 { justify-self: center; }
+  header .help-btn { justify-self: end; }
 
   /* Marca: nuvem Nimbo + wordmark "2048" (acento na 2ª metade, à la "Ordem Secreta"). */
   .brand { display: flex; align-items: center; gap: 8px; }
@@ -381,14 +384,12 @@
 <body>
   <div class="app">
     <header>
-      <div class="brand">
-        <a class="brand__cloud" href="/" aria-label="Voltar para a Nimbo — nimbo.games">
-          <svg viewBox="0 0 24 24" fill="none" focusable="false">
-            <path d="M7 18a4 4 0 0 1-.6-7.96 5 5 0 0 1 9.44-2.55A4.5 4.5 0 0 1 17.5 18H7z" fill="currentColor"/>
-          </svg>
-        </a>
-        <h1 aria-label="2048"><span class="wordmark__word--1">20</span><span class="wordmark__word--2">48</span></h1>
-      </div>
+      <a class="brand__cloud" href="/" aria-label="Voltar para a Nimbo — nimbo.games">
+        <svg viewBox="0 0 24 24" fill="none" focusable="false">
+          <path d="M7 18a4 4 0 0 1-.6-7.96 5 5 0 0 1 9.44-2.55A4.5 4.5 0 0 1 17.5 18H7z" fill="currentColor"/>
+        </svg>
+      </a>
+      <h1 aria-label="2048"><span class="wordmark__word--1">20</span><span class="wordmark__word--2">48</span></h1>
       <button type="button" class="help-btn" id="help-open" aria-label="Como jogar"
         aria-haspopup="dialog" title="Como jogar">?</button>
     </header>
