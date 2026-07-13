@@ -380,13 +380,22 @@ main {
 .hud {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 18px;
+  max-width: 100%;
   background: var(--superficie-funda);
   border: 1px solid var(--borda-fogo);
   border-radius: 999px;
   padding: 7px 22px;
   font-size: 1rem;
 }
+
+/* nenhum grupo do HUD pode embrulhar internamente (corações em 2ª linha, "Rodada"/"1" quebrado) */
+#hud-vidas, .hud-rodada, #hud-moedas { white-space: nowrap; }
+/* os corações são o grupo mais largo: mantém-nos juntos e sem folga entre si */
+#hud-vidas { letter-spacing: -0.04em; }
+/* o chip de nível e as moedas não encolhem (texto sempre legível); vidas/rodada cedem espaço antes */
+.hud-nivel, #hud-moedas { flex-shrink: 0; }
 
 .hud-rodada {
   font-weight: 900;
@@ -743,6 +752,23 @@ main {
   .logo-survival { font-size: 1.45rem; }
   .ini-stat { min-width: 88px; padding: 10px 12px; }
   .botao-fogo { padding: 16px 48px; font-size: 1.15rem; }
+
+  /* HUD compacto no celular: tudo (vidas · rodada · nível · moedas) numa linha só, sem quebra.
+     Aperta gaps/padding e reduz um pouco as fontes — o HUD respira e cabe em 360px. */
+  .hud { gap: 9px; padding: 6px 13px; font-size: 0.92rem; }
+  #hud-vidas { font-size: 0.82rem; }
+  .hud-rodada { font-size: 0.72rem; letter-spacing: 0.05em; }
+  .hud-nivel { font-size: 0.64rem; padding: 3px 8px; letter-spacing: 0.05em; }
+  #hud-moedas { font-size: 0.9rem; }
+}
+
+/* telas bem estreitas (≈360px e menos): mais um passo de compressão do HUD */
+@media (max-width: 365px) {
+  .hud { gap: 7px; padding: 5px 11px; }
+  #hud-vidas { font-size: 0.74rem; letter-spacing: -0.06em; }
+  .hud-rodada { font-size: 0.66rem; letter-spacing: 0.02em; }
+  .hud-nivel { font-size: 0.6rem; padding: 2px 7px; }
+  #hud-moedas { font-size: 0.84rem; }
 }
 
 /* ---------- acessibilidade: menos movimento ---------- */
