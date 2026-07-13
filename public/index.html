@@ -100,7 +100,7 @@
   /* ---------- hero ---------- */
   .hero{padding:80px 0 60px;text-align:center;position:relative;}
   .cloud-wrap{position:relative;width:min(360px,76vw);margin:0 auto 8px;}
-  .cloud-hero{width:100%;display:block;cursor:pointer;
+  .cloud-hero{width:100%;display:block;cursor:pointer;position:relative;z-index:1;
     filter:drop-shadow(0 20px 40px rgba(109,139,255,.3));
     animation:float 6s ease-in-out infinite;
     transition:filter .2s ease;}
@@ -108,6 +108,23 @@
   .cloud-hero:active{transform:scale(.97);}
   @keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-12px) rotate(-1.5deg)}}
   .cloud-hint{display:block;margin-top:2px;font-size:13px;color:var(--muted);opacity:.85;}
+
+  /* olhinhos que piscam (hero + guia) */
+  .blink{transform:scaleY(.1);transform-origin:center;transform-box:fill-box;}
+
+  /* nuvem-hero cochilando (idle) */
+  #cloudHero.sleeping #heroEyes{transform:scaleY(.1);transform-origin:center;transform-box:fill-box;}
+  .cloud-zzz{position:absolute;top:2%;right:6%;font-size:15px;font-weight:700;color:var(--muted);
+    opacity:0;pointer-events:none;letter-spacing:1px;z-index:2;transition:opacity .3s ease;}
+  .cloud-wrap.napping .cloud-zzz{opacity:.8;animation:zzzFloat 2.6s ease-in-out infinite;}
+  @keyframes zzzFloat{0%{transform:translateY(0);opacity:0;}15%{opacity:.8;}100%{transform:translateY(-16px);opacity:0;}}
+
+  /* sol suave espiando atrás da nuvem-hero (só de dia) */
+  .sky-sun{position:absolute;top:-6%;right:2%;width:46%;aspect-ratio:1;border-radius:50%;z-index:0;
+    background:radial-gradient(circle, rgba(255,196,77,.55), rgba(255,196,77,.18) 55%, transparent 75%);
+    filter:blur(6px);opacity:0;transition:opacity .4s ease;pointer-events:none;}
+  body.is-day .sky-sun{opacity:1;}
+  body.is-night .star{opacity:.9;}
   .hero h1{font-size:clamp(34px,6vw,60px);line-height:1.08;margin:.2em 0 .3em;font-weight:800;letter-spacing:-.5px;}
   .hero h1 .accent{color:var(--sun);}
   .hero h1 .accent2{color:var(--coral);}
@@ -288,6 +305,8 @@
   <section class="hero">
     <div class="wrap">
       <div class="cloud-wrap">
+        <div class="sky-sun" aria-hidden="true"></div>
+        <span class="cloud-zzz" aria-hidden="true">z z Z</span>
         <svg class="cloud-hero" id="cloudHero" viewBox="0 0 300 170" role="img" aria-label="A nuvem Nimbo — clique para ver ela reagir" tabindex="0">
           <defs>
             <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
@@ -298,10 +317,12 @@
           <path fill="url(#cg)" d="M78 118a34 34 0 0 1-3.4-67.8A46 46 0 0 1 162 62a31 31 0 0 1 44 8 30 30 0 0 1-4 48z"/>
           <!-- rosto da nuvem: olhos seguem o cursor -->
           <g id="cloudFace">
-            <circle cx="112" cy="82" r="10" fill="#20182f"/>
-            <circle cx="152" cy="82" r="10" fill="#20182f"/>
-            <circle id="eyeL" cx="114" cy="80" r="3.4" fill="#fff"/>
-            <circle id="eyeR" cx="154" cy="80" r="3.4" fill="#fff"/>
+            <g id="heroEyes">
+              <circle cx="112" cy="82" r="10" fill="#20182f"/>
+              <circle cx="152" cy="82" r="10" fill="#20182f"/>
+              <circle id="eyeL" cx="114" cy="80" r="3.4" fill="#fff"/>
+              <circle id="eyeR" cx="154" cy="80" r="3.4" fill="#fff"/>
+            </g>
             <path id="mouth" d="M120 98 q12 10 24 0" stroke="#20182f" stroke-width="4" fill="none" stroke-linecap="round"/>
             <ellipse cx="98" cy="94" rx="7" ry="4" fill="#ff9a8d" opacity=".55"/>
             <ellipse cx="168" cy="94" rx="7" ry="4" fill="#ff9a8d" opacity=".55"/>
@@ -505,10 +526,12 @@
     <g id="guideFace">
       <path id="browLPeek" d="M102 68 q10 -5 20 0" stroke="#20182f" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
       <path id="browRPeek" d="M142 68 q10 -5 20 0" stroke="#20182f" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
-      <circle id="lidLPeek" cx="112" cy="82" r="10" fill="#20182f"/>
-      <circle id="lidRPeek" cx="152" cy="82" r="10" fill="#20182f"/>
-      <circle id="eyeLPeek" cx="114" cy="80" r="3.4" fill="#fff"/>
-      <circle id="eyeRPeek" cx="154" cy="80" r="3.4" fill="#fff"/>
+      <g id="guideEyes">
+        <circle id="lidLPeek" cx="112" cy="82" r="10" fill="#20182f"/>
+        <circle id="lidRPeek" cx="152" cy="82" r="10" fill="#20182f"/>
+        <circle id="eyeLPeek" cx="114" cy="80" r="3.4" fill="#fff"/>
+        <circle id="eyeRPeek" cx="154" cy="80" r="3.4" fill="#fff"/>
+      </g>
       <path id="mouthPeek" d="M120 98 q12 10 24 0" stroke="#20182f" stroke-width="4" fill="none" stroke-linecap="round"/>
     </g>
   </svg>
@@ -561,6 +584,7 @@
     var baseL = {x:114,y:80}, baseR = {x:154,y:80}, range = 2.2;
 
     function moveEyes(clientX, clientY){
+      if (cloud.classList.contains('sleeping')) return;
       var rect = cloud.getBoundingClientRect();
       var cx = rect.left + rect.width*0.44, cy = rect.top + rect.height*0.48;
       var dx = clientX - cx, dy = clientY - cy;
@@ -581,6 +605,20 @@
     var hint = document.getElementById('cloudHint');
     if (!cloud) return;
     var audioCtx;
+
+    function updateHint(){
+      if (!hint) return;
+      var n = 0;
+      try{
+        n = parseInt(localStorage.getItem('nimbo_drops'), 10) || 0;
+      }catch(e){ n = 0; }
+      if (n > 0){
+        hint.textContent = 'você já fez chover ' + n + (n === 1 ? ' vez' : ' vezes') + ' ☁️';
+      } else {
+        hint.textContent = 'psst… clica na nuvem';
+      }
+    }
+    updateHint();
 
     function playBloop(){
       try{
@@ -619,7 +657,11 @@
     function react(){
       playBloop();
       popDrop();
-      if (hint) hint.style.visibility = 'hidden';
+      try{
+        var n = (parseInt(localStorage.getItem('nimbo_drops'), 10) || 0) + 1;
+        localStorage.setItem('nimbo_drops', n);
+      }catch(e){ /* localStorage indisponível (modo privado etc.) — segue sem contar */ }
+      updateHint();
       if (mouth){
         mouth.setAttribute('d','M120 96 q12 16 24 0');
         setTimeout(function(){ mouth.setAttribute('d','M120 98 q12 10 24 0'); }, 260);
@@ -636,6 +678,63 @@
     cloud.addEventListener('keydown', function(e){
       if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); react(); }
     });
+  })();
+
+  // olhinhos que piscam (hero + guia) — grupos independentes, intervalo aleatório
+  (function(){
+    if (reduceMotion) return;
+    var heroEyes = document.getElementById('heroEyes');
+    var guideEyes = document.getElementById('guideEyes');
+    var heroCloud = document.getElementById('cloudHero');
+
+    function scheduleBlink(group, isHero){
+      if (!group) return;
+      var delay = 3000 + Math.random() * 4000;
+      setTimeout(function(){
+        // não pisca o hero enquanto ele estiver "dormindo" (feature soneca)
+        if (!(isHero && heroCloud && heroCloud.classList.contains('sleeping'))){
+          group.classList.add('blink');
+          setTimeout(function(){ group.classList.remove('blink'); }, 110);
+        }
+        scheduleBlink(group, isHero);
+      }, delay);
+    }
+    scheduleBlink(heroEyes, true);
+    scheduleBlink(guideEyes, false);
+  })();
+
+  // nuvem-hero tira uma soneca quando ninguém mexe no site (idle)
+  (function(){
+    var cloud = document.getElementById('cloudHero');
+    var wrap = document.querySelector('.cloud-wrap');
+    if (!cloud || !wrap) return;
+    var IDLE_MS = 12000;
+    var timer = null;
+
+    function sleep(){
+      cloud.classList.add('sleeping');
+      wrap.classList.add('napping');
+    }
+    function wake(){
+      cloud.classList.remove('sleeping');
+      wrap.classList.remove('napping');
+    }
+    function resetIdle(){
+      wake();
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(sleep, IDLE_MS);
+    }
+    ['pointermove','click','keydown','scroll','touchstart'].forEach(function(evt){
+      window.addEventListener(evt, resetIdle, { passive: true });
+    });
+    resetIdle();
+  })();
+
+  // humor pelo horário real: dia (sol suave) vs. noite (estrelas mais vivas)
+  (function(){
+    var h = new Date().getHours();
+    var day = h >= 6 && h < 18;
+    document.body.classList.add(day ? 'is-day' : 'is-night');
   })();
 
   // ---------------------------------------------------------------------
@@ -712,11 +811,14 @@
     // cada uma define o LINK do balão de sugestão (o texto é o clicável).
     var sections = [
       { el: document.getElementById('estudio'), mood: 'happy',
-        text: 'diversão em 1º lugar ✨', href: '#jogos' },
+        texts: ['diversão em 1º lugar ✨', 'a gente refaz até dar vontade de jogar de novo 🔁', 'zero "meh" por aqui 🌈'],
+        href: '#jogos' },
       { el: document.querySelector('.game'), mood: 'hop',
-        text: 'joga o ' + game.label + '! ' + game.emoji, href: game.href },
+        texts: ['joga o ' + game.label + '! ' + game.emoji, 'esse aqui vicia 👀', '2 min e você tá dentro ⏱️', 'bora um ' + game.label + '? ' + game.emoji],
+        href: game.href },
       { el: document.getElementById('contato'), mood: 'wave',
-        text: 'manda um oi: contato@nimbo.games ☁️', href: 'mailto:contato@nimbo.games' }
+        texts: ['manda um oi: contato@nimbo.games ☁️', 'ideia, parceria ou só um oi 👋', 'chama a gente: contato@nimbo.games'],
+        href: 'mailto:contato@nimbo.games' }
     ].filter(function(s){ return !!s.el; });
 
     if (!sections.length) return;
@@ -732,6 +834,7 @@
       return r.height > 0 && (visible / r.height) >= threshold;
     }
 
+    var lastWinnerEl = null;
     var io = new IntersectionObserver(function(entries){
       var anyRelevant = entries.some(function(e){ return e.isIntersecting; });
       if (!anyRelevant) return;
@@ -742,7 +845,11 @@
       if (!winner) return;
       reveal();
       setMood(winner.mood);
-      say(winner.text);
+      // só re-sorteia a frase quando a seção ativa MUDA — evita flicker no scroll
+      if (winner.el !== lastWinnerEl){
+        lastWinnerEl = winner.el;
+        say(winner.texts[Math.floor(Math.random() * winner.texts.length)]);
+      }
       if (bubble) bubble.setAttribute('href', winner.href);
     }, { threshold: 0.4 });
     sections.forEach(function(s){ io.observe(s.el); });
