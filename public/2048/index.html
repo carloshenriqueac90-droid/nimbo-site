@@ -432,8 +432,16 @@
     </div>
   </div>
 
+<!-- Analytics PostHog (best-effort; carrega ANTES do jogo p/ window.g2048Track existir). -->
+<script src="analytics.js"></script>
 <script>
 "use strict";
+
+// dispara um evento de analytics (best-effort; nunca pode travar o jogo — ver analytics.js)
+function evt(nome, props) {
+  try { if (typeof window.g2048Track === "function") window.g2048Track(nome, props); }
+  catch (e) { /* best-effort: nunca trava o jogo */ }
+}
 
 const SIZE = 4;
 const tilesEl   = document.getElementById("tiles");
@@ -451,6 +459,11 @@ let keepPlaying;   // continuou após vencer?
 let nextId;        // id incremental das peças
 let busy = false;  // trava entrada durante a animação
 let moveTimer = null; // timer da animação de move (p/ cancelar em Novo jogo)
+let firstMoveSent = false; // g2048_first_move: dispara só uma vez por carregamento de página
+let milestonesReached;     // Set: marcos de peça (128+) já reportados NESTA partida
+
+// marcos de peça alta que reportamos ao analytics (uma vez por valor por jogo)
+const TILE_MILESTONES = [128, 256, 512, 1024, 2048];
 
 // ---- Persistência do recorde (à prova de storage bloqueado) ----
 function loadBest() {
@@ -483,10 +496,12 @@ function newGame() {
   won = false;
   keepPlaying = false;
   nextId = 1;
+  milestonesReached = new Set();
   scoreEl.textContent = 0;
   hideOverlay();
   addRandomTile();
   addRandomTile();
+  evt("g2048_game_start", {});
 }
 
 // ---- Peças ----
@@ -582,7 +597,12 @@ function move(v) {
 
       score += nextTile.value;
       showScorePop(nextTile.value);
-      if (nextTile.value === 2048 && !won) won = true;
+      // marco de peça alta: uma vez por valor por partida (não a cada fusão)
+      if (TILE_MILESTONES.indexOf(nextTile.value) !== -1 && !milestonesReached.has(nextTile.value)) {
+        milestonesReached.add(nextTile.value);
+        evt("g2048_tile_reached", { value: nextTile.value });
+      }
+      if (nextTile.value === 2048 && !won) { won = true; evt("g2048_win", { score: score }); }
       moved = true;
     } else if (far.r !== r || far.c !== c) {
       // MOVIMENTO simples até a casa mais distante possível
@@ -595,6 +615,9 @@ function move(v) {
   }));
 
   if (!moved) return;
+
+  // primeiro movimento efetivo da sessão (sinal de engajamento): só uma vez por página
+  if (!firstMoveSent) { firstMoveSent = true; evt("g2048_first_move", {}); }
 
   busy = true;
   updateScore();
@@ -654,6 +677,7 @@ function showGameOver() {
   overlayEl.classList.remove("win");
   overlayTitleEl.textContent = "Fim de jogo!";
   overlayContinueEl.style.display = "none";
+  evt("g2048_game_over", { score: score, best: best });
 }
 function hideOverlay() {
   overlayEl.classList.remove("show", "win", "over");
@@ -715,6 +739,7 @@ function openHelp() {
   helpModalEl.hidden = false;
   helpModalEl.classList.add("show");
   helpOpen = true;
+  evt("g2048_help_open", {});
   // foco vai para o card (via botão de fechar) — leitor de tela anuncia o dialog
   helpCloseEl.focus();
 }
