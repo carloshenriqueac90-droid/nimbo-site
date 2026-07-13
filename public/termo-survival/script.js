@@ -17,6 +17,18 @@ const MAX_VIDAS = 5;
 const MAX_EXTRAS = 2;
 const VIDAS_INICIAIS = 3;
 
+// ícone de moeda: SVG inline (disco dourado com brilho), não emoji — em alguns aparelhos
+// (ex.: Galaxy S24) a fonte do sistema não tem o glifo 🪙 (U+1FA99, emoji de 2019) e ele
+// renderiza como tofu. O disco usa var(--lugar), a mesma cor dos badges de preço dos
+// power-ups (.powerup .preco), então casa com o resto da UI em qualquer tema (inclusive
+// modo de alto contraste, que redefine --lugar).
+const ICONE_MOEDA =
+  '<svg class="icone-moeda" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" focusable="false">' +
+  '<circle cx="10" cy="10" r="9" style="fill:var(--lugar)"></circle>' +
+  '<circle cx="10" cy="10" r="8.1" fill="none" style="stroke:rgba(36,27,33,0.35)" stroke-width="1"></circle>' +
+  '<ellipse cx="7.3" cy="6.8" rx="2.6" ry="1.5" style="fill:rgba(255,255,255,0.5)" transform="rotate(-25 7.3 6.8)"></ellipse>' +
+  '</svg>';
+
 // localStorage pode estar bloqueado (privacidade estrita, alguns contextos file://);
 // nesse caso o jogo funciona sem persistência, guardando em memória
 const memoriaFallback = {};
@@ -354,7 +366,7 @@ function atualizarHUD() {
   // o tom do fundo/fogo esquenta com a dificuldade
   document.body.classList.remove("tom-medio", "tom-dificil");
   if (nivel !== "facil") document.body.classList.add("tom-" + nivel);
-  document.getElementById("hud-moedas").textContent = "🪙 " + sv.moedas;
+  document.getElementById("hud-moedas").innerHTML = ICONE_MOEDA + " " + sv.moedas;
 
   document.querySelectorAll(".powerup").forEach(btn => {
     const pu = btn.dataset.pu;
@@ -537,7 +549,7 @@ function fimPalpite(palavra) {
     setTimeout(() => {
       abrirModalRodada(
         "Rodada " + (sv.rodada - 1) + " vencida! 🎉",
-        "+" + ganho + " moedas 🪙 (total: " + sv.moedas + "). A próxima tem " + tentativasBase(sv.rodada) + " tentativas." + aviso,
+        "+" + ganho + " moedas (total: " + sv.moedas + "). A próxima tem " + tentativasBase(sv.rodada) + " tentativas." + aviso,
         "Próxima rodada"
       );
     }, 1100);

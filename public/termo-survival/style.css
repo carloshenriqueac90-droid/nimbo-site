@@ -459,6 +459,10 @@ main {
 
 /* nenhum grupo do HUD pode embrulhar internamente (corações em 2ª linha, "Rodada"/"1" quebrado) */
 #hud-vidas, .hud-rodada, #hud-moedas { white-space: nowrap; }
+
+/* ícone de moeda (SVG inline, disco dourado) — substitui o emoji 🪙, que falta em algumas
+   fontes de sistema (ex.: Galaxy S24) e vira tofu. */
+.icone-moeda { display: inline-block; vertical-align: -2px; flex-shrink: 0; }
 /* os corações são o grupo mais largo: mantém-nos juntos e sem folga entre si */
 #hud-vidas { letter-spacing: -0.04em; }
 /* o chip de nível e as moedas não encolhem (texto sempre legível); vidas/rodada cedem espaço antes */
@@ -833,6 +837,7 @@ main {
   .hud-rodada { font-size: 0.72rem; letter-spacing: 0.05em; }
   .hud-nivel { font-size: 0.64rem; padding: 3px 8px; letter-spacing: 0.05em; }
   #hud-moedas { font-size: 0.9rem; }
+  #hud-moedas .icone-moeda { width: 13px; height: 13px; }
 }
 
 /* telas bem estreitas (≈360px e menos): mais um passo de compressão do HUD */
@@ -842,6 +847,7 @@ main {
   .hud-rodada { font-size: 0.66rem; letter-spacing: 0.02em; }
   .hud-nivel { font-size: 0.6rem; padding: 2px 7px; }
   #hud-moedas { font-size: 0.84rem; }
+  #hud-moedas .icone-moeda { width: 12px; height: 12px; }
 }
 
 /* ---------- acessibilidade: menos movimento ---------- */
