@@ -113,20 +113,37 @@ function evt(nome, props) {
 
 // ---------- persistência ----------
 
+// Stats:
+//   recorde        → RANQUEADO: melhor nº de rodadas na Corrida do Dia (o que "conta")
+//   recordeTreino  → melhor nº de rodadas no Modo Livre (treino, local, NÃO é ranking)
+//   corridas/rodadas → totais de atividade dos DOIS modos (não são ranking)
 function carregarStats() {
+  const base = { corridas: 0, rodadas: 0, recorde: 0, recordeTreino: 0 };
   try {
     const s = JSON.parse(armazem.get(CHAVE_STATS));
-    if (s && typeof s.recorde === "number") return s;
+    if (s && typeof s.recorde === "number") {
+      // normaliza estados salvos antes do split ranqueado/treino
+      if (typeof s.recordeTreino !== "number") s.recordeTreino = 0;
+      return Object.assign(base, s);
+    }
   } catch (e) { /* corrompido */ }
-  return { corridas: 0, rodadas: 0, recorde: 0 };
+  return base;
 }
 
-function registrarCorrida(rodadasVencidas) {
+// Só a Corrida do Dia (modo === "daily") mexe no recorde RANQUEADO; o Modo Livre mexe apenas no
+// "melhor no treino". Retorna se bateu o recorde da categoria do modo (para o modal de fim).
+function registrarCorrida(rodadasVencidas, modo) {
   const s = carregarStats();
   s.corridas++;
   s.rodadas += rodadasVencidas;
-  const novoRecorde = rodadasVencidas > s.recorde;
-  if (novoRecorde) s.recorde = rodadasVencidas;
+  let novoRecorde = false;
+  if (modo === "daily") {
+    novoRecorde = rodadasVencidas > s.recorde;
+    if (novoRecorde) s.recorde = rodadasVencidas;
+  } else {
+    novoRecorde = rodadasVencidas > s.recordeTreino;
+    if (novoRecorde) s.recordeTreino = rodadasVencidas;
+  }
   armazem.set(CHAVE_STATS, JSON.stringify(s));
   return novoRecorde;
 }
@@ -382,31 +399,36 @@ function mostrarInicio() {
   // a tela inicial sempre usa o tom base (fácil)
   document.body.classList.remove("tom-medio", "tom-dificil");
   const s = carregarStats();
-  document.getElementById("ini-recorde").textContent = s.recorde;
+  document.getElementById("ini-recorde").textContent = s.recorde;         // ranqueado (destaque)
   document.getElementById("ini-corridas").textContent = s.corridas;
   document.getElementById("ini-rodadas").textContent = s.rodadas;
+  document.getElementById("ini-recorde-treino").textContent = s.recordeTreino; // treino (discreto)
 
   const btnDaily = document.getElementById("btn-jogar-daily");
   const btnEndless = document.getElementById("btn-jogar-endless");
+  const legendaDaily = document.getElementById("legenda-daily");
   const travadoEl = document.getElementById("inicio-travado");
   const trav = travadoHoje();
 
   if (trav) {
     // Corrida do Dia esgotada: bloqueia só ela até a meia-noite (Modo Livre continua liberado)
     btnDaily.classList.add("escondido");
+    legendaDaily.classList.add("escondido");
     travadoEl.classList.remove("escondido");
     document.getElementById("travado-resultado").textContent =
       "Você venceu " + trav.rodadas + (trav.rodadas === 1 ? " rodada" : " rodadas") + " hoje.";
     atualizarContagemAmanha();
   } else {
     btnDaily.classList.remove("escondido");
+    legendaDaily.classList.remove("escondido");
     travadoEl.classList.add("escondido");
     const runDaily = carregarRun("daily");
-    btnDaily.textContent = runDaily ? "CONTINUAR — RODADA " + runDaily.sv.rodada : "Corrida do Dia 🔥";
+    // botão de continuar SEMPRE diz o modo (nunca fica idêntico ao do outro modo)
+    btnDaily.textContent = runDaily ? "▶ Corrida do Dia — Rodada " + runDaily.sv.rodada : "Corrida do Dia 🔥";
   }
 
   const runEndless = carregarRun("endless");
-  btnEndless.textContent = runEndless ? "CONTINUAR — RODADA " + runEndless.sv.rodada : "Modo Livre ♾️";
+  btnEndless.textContent = runEndless ? "▶ Modo Livre — Rodada " + runEndless.sv.rodada : "Modo Livre ♾️";
 
   telaInicio.classList.remove("escondido");
   document.getElementById("header-jogo").classList.add("escondido");
@@ -535,30 +557,33 @@ function fimPalpite(palavra) {
     } else {
       const rodadasVencidas = sv.rodada - 1;
       const modoFinalizado = sv.modo;
-      const novoRecorde = registrarCorrida(rodadasVencidas);
+      const novoRecorde = registrarCorrida(rodadasVencidas, modoFinalizado);
       limparRun(modoFinalizado);
       terminado = true;
       evt("ts_run_end", { rounds_survived: rodadasVencidas, mode: modoFinalizado });
       if (modoFinalizado === "daily") {
         salvarTravado(rodadasVencidas); // trava a Corrida do Dia até a meia-noite (SP); Modo Livre continua liberado
       }
-      const recordeAtual = carregarStats().recorde;
+      const stats = carregarStats();
+      const plural = rodadasVencidas === 1 ? " rodada" : " rodadas";
+      const palavraEra = "A palavra era “" + comAcento(respostaNorm).toUpperCase() + "”. ";
       setTimeout(() => {
         if (modoFinalizado === "daily") {
           abrirModalRodada(
-            novoRecorde ? "Novo recorde! 🏆" : "Fim de jogo 💀",
-            "A palavra era “" + comAcento(respostaNorm).toUpperCase() + "”. Você venceu " + rodadasVencidas +
-              (rodadasVencidas === 1 ? " rodada" : " rodadas") + ". Recorde: " + recordeAtual +
-              ". Sua Corrida do Dia acabou — nova tentativa à meia-noite (horário de Brasília). O Modo Livre continua liberado.",
+            novoRecorde ? "Novo recorde ranqueado! 🏆" : "Fim da Corrida do Dia 💀",
+            palavraEra + "Você venceu " + rodadasVencidas + plural + " na Corrida do Dia 🏆 (ranqueada). " +
+              "Recorde ranqueado: " + stats.recorde + ". Nova tentativa à meia-noite (horário de Brasília). " +
+              "O Modo Livre (treino) continua liberado.",
             null,
             true
           );
         } else {
           abrirModalRodada(
-            novoRecorde ? "Novo recorde! 🏆" : "Fim de jogo 💀",
-            "A palavra era “" + comAcento(respostaNorm).toUpperCase() + "”. Você venceu " + rodadasVencidas +
-              (rodadasVencidas === 1 ? " rodada" : " rodadas") + ". Recorde: " + recordeAtual + ".",
-            "Jogar de novo",
+            novoRecorde ? "Novo melhor no treino! 🎯" : "Fim do treino 💪",
+            palavraEra + "No treino você chegou a " + rodadasVencidas + plural + ". " +
+              "Seu melhor no treino: " + stats.recordeTreino + " (não conta pro ranking). " +
+              "O ranking é só na Corrida do Dia 🏆.",
+            "Treinar de novo",
             true
           );
         }
@@ -753,12 +778,14 @@ function compartilhar() {
   const s = carregarStats();
   const rodadas = sv ? sv.rodada - 1 : 0;
   const modo = sv ? sv.modo : "endless";
+  const plural = rodadas === 1 ? " rodada" : " rodadas";
   const link = "nimbo.games/termo-survival?s=sh";
+  // Diário = ranqueado/comparável (mesmo desafio pra todos, mostra recorde 🏆). Livre = treino,
+  // enquadrado como treino e SEM sugerir ranking.
   const texto = modo === "daily"
-    ? "🔥 Termo Survival — Corrida do Dia " + dataCurtaSP() + "\nSobrevivi a " + rodadas +
-      (rodadas === 1 ? " rodada" : " rodadas") + "! Recorde: " + s.recorde + " 🏆\n" + link
-    : "🔥 Termo Survival\nSobrevivi a " + rodadas + (rodadas === 1 ? " rodada" : " rodadas") +
-      "! Recorde: " + s.recorde + " 🏆\n" + link;
+    ? "🔥 Termo Survival — Corrida do Dia " + dataCurtaSP() + "\nSobrevivi a " + rodadas + plural +
+      "! Recorde ranqueado: " + s.recorde + " 🏆\n" + link
+    : "🔥 Termo Survival — Treino\nCheguei a " + rodadas + plural + " no treino 💪\n" + link;
   evt("ts_share_click", { mode: modo });
   navigator.clipboard.writeText(texto).then(
     () => toast("Resultado copiado!"),
@@ -866,7 +893,7 @@ function aoVirarDia() {
   if (emCorridaDiaria) {
     // a sequência de palavras da Corrida do Dia é derivada da data: a de ontem não continua
     limparRun("daily");
-    registrarCorrida(Math.max(0, sv.rodada - 1)); // conta o progresso da corrida encerrada
+    registrarCorrida(Math.max(0, sv.rodada - 1), "daily"); // conta o progresso da corrida ranqueada encerrada
     terminado = true;
     abrirModalRodada(
       "Virou o dia! 🌅",

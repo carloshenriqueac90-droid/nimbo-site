@@ -48,18 +48,25 @@
     </div>
     <p class="tagline">Palavras sem fim. 3 vidas.<br>Quantas rodadas você aguenta?</p>
     <div class="inicio-stats">
-      <div class="ini-stat"><b id="ini-recorde">0</b><span>recorde</span></div>
-      <div class="ini-stat"><b id="ini-corridas">0</b><span>corridas</span></div>
+      <div class="ini-stat destaque"><b id="ini-recorde">0</b><span>&#127942; recorde ranqueado</span></div>
+      <div class="ini-stat"><b id="ini-corridas">0</b><span>jogos</span></div>
       <div class="ini-stat"><b id="ini-rodadas">0</b><span>rodadas vencidas</span></div>
     </div>
+    <p class="ini-treino">Melhor no treino: <b id="ini-recorde-treino">0</b> · não conta pro ranking</p>
     <div class="inicio-modos">
-      <button id="btn-jogar-daily" class="botao-fogo">Corrida do Dia &#128293;</button>
-      <div id="inicio-travado" class="inicio-travado escondido">
-        <p class="travado-titulo">&#127765; Corrida do Dia esgotada</p>
-        <p id="travado-resultado"></p>
-        <p class="travado-contagem">Nova corrida em <strong id="contagem-amanha">--:--:--</strong></p>
+      <div class="modo-bloco">
+        <button id="btn-jogar-daily" class="botao-fogo">Corrida do Dia &#128293;</button>
+        <p id="legenda-daily" class="modo-legenda"><span class="selo selo-ranqueado">&#127942; Ranqueada</span> mesma pra todos, todo dia</p>
+        <div id="inicio-travado" class="inicio-travado escondido">
+          <p class="travado-titulo">&#127765; Corrida do Dia esgotada</p>
+          <p id="travado-resultado"></p>
+          <p class="travado-contagem">Nova corrida em <strong id="contagem-amanha">--:--:--</strong></p>
+        </div>
       </div>
-      <button id="btn-jogar-endless" class="botao-fantasma botao-livre">Modo Livre &#9854;&#65039;</button>
+      <div class="modo-bloco">
+        <button id="btn-jogar-endless" class="botao-fantasma botao-livre">Modo Livre &#9854;&#65039;</button>
+        <p class="modo-legenda"><span class="selo selo-treino">Treino</span> não conta pro ranking</p>
+      </div>
     </div>
     <button id="btn-como" class="botao-fantasma">Como jogar</button>
   </section>
@@ -124,6 +131,7 @@
       </ul>
       <p>A dificuldade sobe em degraus: rodadas <strong>1–5</strong> têm palavras fáceis e 6 tentativas, <strong>6–10</strong> têm palavras médias e 5 tentativas, e da <strong>11ª</strong> em diante são palavras difíceis com só 4 tentativas. Os acentos são preenchidos automaticamente.</p>
       <p>Tem dois jeitos de jogar: a <strong>Corrida do Dia &#128293;</strong> tem as mesmas palavras pra todo mundo hoje e só permite <strong>uma tentativa por dia</strong> — perdeu as 3 vidas, espera até a <strong>meia-noite (horário de Brasília)</strong> pra tentar de novo. O <strong>Modo Livre &#9854;&#65039;</strong> tem palavras sorteadas e corridas <strong>ilimitadas</strong>: perdeu, começa outra na hora. Os dois dá pra fechar e retomar de onde parou.</p>
+      <p>A <strong>Corrida do Dia é a modalidade ranqueada</strong> &#127942;: como o desafio é igual pra todo mundo, o resultado é comparável e é ele que forma o seu <strong>recorde ranqueado</strong>. O <strong>Modo Livre é treino</strong> — vale pra praticar e bater seu próprio "melhor no treino", mas <strong>não conta pro ranking</strong>.</p>
       <label class="toggle-contraste">
         <input type="checkbox" id="chk-contraste">
         Modo de alto contraste (cores para daltônicos)
