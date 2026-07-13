@@ -414,7 +414,6 @@ function mostrarInicio() {
   document.getElementById("ini-recorde").textContent = s.recorde;         // ranqueado (destaque)
   document.getElementById("ini-corridas").textContent = s.corridas;
   document.getElementById("ini-rodadas").textContent = s.rodadas;
-  document.getElementById("ini-recorde-treino").textContent = s.recordeTreino; // treino (discreto)
 
   const btnDaily = document.getElementById("btn-jogar-daily");
   const btnEndless = document.getElementById("btn-jogar-endless");
