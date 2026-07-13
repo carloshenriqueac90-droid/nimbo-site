@@ -831,6 +831,15 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Backspace") { tratarTecla("apagar"); return; }
   if (e.key === "ArrowLeft" && cursor > 0) { cursor--; desenharLinhaAtual(); return; }
   if (e.key === "ArrowRight" && cursor < TAMANHO - 1) { cursor++; desenharLinhaAtual(); return; }
+  if (e.key === " " || e.code === "Space") {
+    // espaço "pula uma casa": avança o cursor sem preencher a letra atual (deixa lacunas
+    // pra posicionar letras já conhecidas). preventDefault sempre, mesmo na última casa,
+    // senão a barra de espaço rola a página.
+    e.preventDefault();
+    if (cursor < TAMANHO - 1) cursor++;
+    desenharLinhaAtual();
+    return;
+  }
   const letra = normalizar(e.key);
   if (/^[a-z]$/.test(letra)) tratarTecla(letra);
 });
