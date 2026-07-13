@@ -192,19 +192,6 @@
     .flip-btn{width:40px;height:40px;font-size:18px;}
   }
 
-  /* ---------- next / process card ---------- */
-  .next-card{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);
-    padding:26px;position:relative;transition:border-color .18s;}
-  .next-card:hover{border-color:rgba(109,139,255,.4);}
-  .next-card .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.5px;
-    padding:4px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted);margin-bottom:14px;}
-  .next-card h3{margin:0 0 10px;font-size:20px;}
-  .next-card p{color:var(--muted);margin:0 0 16px;font-size:15px;}
-  .next-card ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;}
-  .next-card li{display:flex;gap:10px;align-items:flex-start;color:var(--muted);font-size:14px;}
-  .next-card li .dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--mint);margin-top:7px;opacity:.9;}
-  .next-card li strong{color:var(--text);font-weight:700;}
-
   /* ---------- contact ---------- */
   .contact{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:26px;padding:48px 24px;margin:24px 0;position:relative;overflow:hidden;}
   .contact::before{content:'';position:absolute;inset:0;
@@ -483,16 +470,6 @@
           </div>
         </article>
 
-        <article class="next-card" aria-labelledby="next-h">
-          <span class="tag">Como escolhemos o próximo</span>
-          <h3 id="next-h">Três gotas pingando</h3>
-          <p>Já são três jogos caindo da nuvem. A próxima gota só pinga aqui quando os dados dos primeiros disserem que vale — sem promessa de data, sem enrolação.</p>
-          <ul>
-            <li><span class="dot" aria-hidden="true"></span> <span><strong>Critério:</strong> baixa/média complexidade, alta rejogabilidade.</span></li>
-            <li><span class="dot" aria-hidden="true"></span> <span><strong>Processo:</strong> validado com dados reais do primeiro jogo antes de escolher o segundo.</span></li>
-            <li><span class="dot" aria-hidden="true"></span> <span><strong>Marca:</strong> mesma nuvem, qualidade constante — sem pressa por volume.</span></li>
-          </ul>
-        </article>
       </div>
     </div>
   </section>
@@ -717,7 +694,6 @@
     // seções que o guia observa, na ordem em que aparecem na página
     var sections = [
       { el: document.getElementById('estudio'), mood: 'happy', text: 'diversão em 1º lugar ✨' },
-      { el: document.querySelector('.next-card'), mood: 'think', text: 'hmm… qual vai ser a próxima gota? 🤔' },
       { el: document.querySelector('.game'), mood: 'hop', text: 'joga o Ordem Secreta! 🔀' },
       { el: document.getElementById('contato'), mood: 'wave', text: 'manda um oi: contato@nimbo.games ☁️' }
     ].filter(function(s){ return !!s.el; });
