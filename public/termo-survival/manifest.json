@@ -1,0 +1,18 @@
+{
+  "name": "Termo Survival",
+  "short_name": "Termo Survival",
+  "description": "Roguelike de palavras: 3 vidas, rodadas sem fim, power-ups. Quantas rodadas você aguenta?",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1114",
+  "theme_color": "#1a1114",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

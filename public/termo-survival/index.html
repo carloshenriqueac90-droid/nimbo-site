@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Termo Survival</title>
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#1a1114">
+  <meta name="description" content="Roguelike de palavras: adivinhe uma palavra após a outra com só 3 vidas, ganhe moedas para power-ups e veja até onde a dificuldade te leva. Grátis, no navegador.">
+
+  <!--
+    Open Graph / Twitter Card: preview de marca genérico (sem a palavra do dia), para o link
+    renderizar bem no WhatsApp/X quando alguém compartilhar o resultado.
+
+    Subpasta: jogo servido em nimbo.games/termo-survival, não subdomínio. `og:image` e `og:url`
+    usam URL ABSOLUTA (https://nimbo.games/termo-survival/...) porque crawlers de redes sociais
+    exigem — URL relativa sem host não funciona em OG tags. `og-image.png` (1200×630, <300KB)
+    é gerado a partir de `og-image.html` (mesma pasta) e servido em /termo-survival/og-image.png.
+  -->
+  <meta property="og:title" content="Termo Survival 🔥">
+  <meta property="og:description" content="Adivinhe palavras de 5 letras, uma rodada após a outra, com só 3 vidas. Ganhe moedas, compre power-ups e sobreviva o máximo que aguentar. Grátis, no navegador.">
+  <meta property="og:image" content="https://nimbo.games/termo-survival/og-image.png">
+  <meta property="og:url" content="https://nimbo.games/termo-survival/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://nimbo.games/termo-survival/og-image.png">
+
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- brasas flutuando ao fundo (mais brasas surgem nos níveis médio e difícil) -->
+  <div class="brasas" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <!-- tela inicial -->
+  <section id="tela-inicio">
+    <div class="logo">
+      <div class="logo-tiles" aria-label="Termo">
+        <span class="tt certo">T</span><span class="tt">E</span><span class="tt">R</span><span class="tt lugar">M</span><span class="tt">O</span>
+      </div>
+      <div class="logo-survival">SURVIVAL <span class="chama">&#128293;</span></div>
+    </div>
+    <p class="tagline">Palavras sem fim. 3 vidas.<br>Quantas rodadas você aguenta?</p>
+    <div class="inicio-stats">
+      <div class="ini-stat"><b id="ini-recorde">0</b><span>recorde</span></div>
+      <div class="ini-stat"><b id="ini-corridas">0</b><span>corridas</span></div>
+      <div class="ini-stat"><b id="ini-rodadas">0</b><span>rodadas vencidas</span></div>
+    </div>
+    <div class="inicio-modos">
+      <button id="btn-jogar-daily" class="botao-fogo">Corrida do Dia &#128293;</button>
+      <div id="inicio-travado" class="inicio-travado escondido">
+        <p class="travado-titulo">&#127765; Corrida do Dia esgotada</p>
+        <p id="travado-resultado"></p>
+        <p class="travado-contagem">Nova corrida em <strong id="contagem-amanha">--:--:--</strong></p>
+      </div>
+      <button id="btn-jogar-endless" class="botao-fantasma botao-livre">Modo Livre &#9854;&#65039;</button>
+    </div>
+    <button id="btn-como" class="botao-fantasma">Como jogar</button>
+  </section>
+
+  <!-- jogo -->
+  <header id="header-jogo" class="escondido">
+    <button class="icone" id="btn-menu" title="Voltar ao menu" aria-label="Voltar ao menu">&#8962;</button>
+    <div class="logo-mini"><strong>TERMO</strong>&nbsp;SURVIVAL <span class="chama">&#128293;</span></div>
+    <button class="icone" id="btn-ajuda" title="Como jogar" aria-label="Como jogar">?</button>
+  </header>
+
+  <main id="jogo" class="escondido">
+    <div id="hud" class="hud">
+      <span id="hud-vidas" title="Vidas">&#10084;&#65039;&#10084;&#65039;&#10084;&#65039;</span>
+      <span id="hud-rodada" class="hud-rodada">Rodada 1</span>
+      <span id="hud-nivel" class="hud-nivel nivel-facil">fácil</span>
+      <span id="hud-moedas" title="Moedas">&#129689; 0</span>
+    </div>
+    <div id="tabuleiro" aria-label="Tabuleiro do jogo"></div>
+    <div id="dicas" class="dicas escondido" aria-label="Letras reveladas"></div>
+    <div id="powerups" class="powerups" aria-label="Power-ups">
+      <button class="powerup" data-pu="revelar" title="Revelar uma letra na posição certa">&#128161;<span class="preco">6</span></button>
+      <button class="powerup" data-pu="eliminar" title="Eliminar 3 letras que não estão na palavra">&#128683;<span class="preco">4</span></button>
+      <button class="powerup" data-pu="extra" title="Tentativa extra (máx. 2 por rodada)">&#10133;<span class="preco">5</span></button>
+      <button class="powerup" data-pu="vida" title="Vida extra (máx. 5)">&#10084;&#65039;<span class="preco">12</span></button>
+    </div>
+    <div id="teclado" aria-label="Teclado virtual"></div>
+  </main>
+
+  <div id="toast-container"></div>
+
+  <!-- Modal: como jogar -->
+  <div class="modal-fundo escondido" id="modal-ajuda">
+    <div class="modal">
+      <button class="modal-fechar" data-fecha="modal-ajuda">&times;</button>
+      <h2>Como jogar</h2>
+      <p>Adivinhe palavras de 5 letras, uma rodada após a outra, com <strong>3 vidas</strong>. Errou a palavra da rodada? Perde uma vida. Perdeu todas? Fim de jogo.</p>
+      <div class="exemplo">
+        <div class="linha-exemplo">
+          <span class="celula certo">T</span><span class="celula">U</span><span class="celula">R</span><span class="celula">M</span><span class="celula">A</span>
+        </div>
+        <p>A letra <strong>T</strong> está na palavra, na posição correta.</p>
+      </div>
+      <div class="exemplo">
+        <div class="linha-exemplo">
+          <span class="celula">V</span><span class="celula lugar">I</span><span class="celula">O</span><span class="celula">L</span><span class="celula">A</span>
+        </div>
+        <p>A letra <strong>I</strong> está na palavra, mas em outra posição.</p>
+      </div>
+      <div class="exemplo">
+        <div class="linha-exemplo">
+          <span class="celula">P</span><span class="celula">U</span><span class="celula errado">L</span><span class="celula">S</span><span class="celula">O</span>
+        </div>
+        <p>A letra <strong>L</strong> não está na palavra.</p>
+      </div>
+      <p>Vencer uma rodada rende <strong>moedas &#129689;</strong> — 2 + 1 por tentativa não usada. Gaste nos power-ups a qualquer momento:</p>
+      <ul class="lista-powerups">
+        <li>&#128161; <strong>Revelar letra</strong> (6) — mostra uma letra na posição certa</li>
+        <li>&#128683; <strong>Eliminar letras</strong> (4) — apaga 3 letras do teclado</li>
+        <li>&#10133; <strong>Tentativa extra</strong> (5) — mais uma linha, máx. 2 por rodada</li>
+        <li>&#10084;&#65039; <strong>Vida extra</strong> (12) — máx. 5 vidas</li>
+      </ul>
+      <p>A dificuldade sobe em degraus: rodadas <strong>1–5</strong> têm palavras fáceis e 6 tentativas, <strong>6–10</strong> têm palavras médias e 5 tentativas, e da <strong>11ª</strong> em diante são palavras difíceis com só 4 tentativas. Os acentos são preenchidos automaticamente.</p>
+      <p>Tem dois jeitos de jogar: a <strong>Corrida do Dia &#128293;</strong> tem as mesmas palavras pra todo mundo hoje e só permite <strong>uma tentativa por dia</strong> — perdeu as 3 vidas, espera até a <strong>meia-noite (horário de Brasília)</strong> pra tentar de novo. O <strong>Modo Livre &#9854;&#65039;</strong> tem palavras sorteadas e corridas <strong>ilimitadas</strong>: perdeu, começa outra na hora. Os dois dá pra fechar e retomar de onde parou.</p>
+      <label class="toggle-contraste">
+        <input type="checkbox" id="chk-contraste">
+        Modo de alto contraste (cores para daltônicos)
+      </label>
+    </div>
+  </div>
+
+  <!-- Modal: transições de rodada e fim de jogo -->
+  <div class="modal-fundo escondido" id="modal-rodada">
+    <div class="modal modal-centro">
+      <h2 id="rodada-titulo"></h2>
+      <p id="rodada-texto"></p>
+      <div class="modal-acoes">
+        <button id="btn-continuar" class="botao-acao"></button>
+        <button id="btn-compartilhar" class="botao-acao dourado escondido">Compartilhar &#128293;</button>
+        <button id="btn-sair" class="botao-acao secundario escondido">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="palavras.js"></script>
+  <script src="respostas.js"></script>
+  <script src="analytics.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
