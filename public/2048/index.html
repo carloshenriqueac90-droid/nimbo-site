@@ -67,7 +67,7 @@
   }
   header .brand__cloud { justify-self: start; }
   header h1 { justify-self: center; }
-  header .help-btn { justify-self: end; }
+  header .header-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
 
   /* Marca: nuvem Nimbo + wordmark "2048" (acento na 2ª metade, à la "Ordem Secreta"). */
   .brand { display: flex; align-items: center; gap: 8px; }
@@ -99,8 +99,8 @@
     color: transparent;
   }
 
-  /* Botão redondo de ajuda "?" — mesmo estilo dos botões de topo do Ordem Secreta. */
-  .help-btn {
+  /* Botão redondo de ajuda "?" e de "voltar 1 movimento" — mesmo estilo dos botões de topo do Ordem Secreta. */
+  .help-btn, #undo-btn {
     border: 1.5px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: var(--color-muted);
@@ -117,10 +117,16 @@
     justify-content: center;
     transition: border-color 120ms ease, color 120ms ease;
   }
-  .help-btn:hover, .help-btn:focus-visible {
+  #undo-btn svg { width: 18px; height: 18px; }
+  .help-btn:hover, .help-btn:focus-visible,
+  #undo-btn:hover:not([disabled]), #undo-btn:focus-visible:not([disabled]) {
     border-color: var(--color-primary);
     color: var(--color-text);
     outline: none;
+  }
+  .help-btn[disabled], #undo-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   /* ======== Placares ======== */
@@ -390,8 +396,13 @@
         </svg>
       </a>
       <h1 aria-label="2048"><span class="wordmark__word--1">20</span><span class="wordmark__word--2">48</span></h1>
-      <button type="button" class="help-btn" id="help-open" aria-label="Como jogar"
-        aria-haspopup="dialog" title="Como jogar">?</button>
+      <div class="header-actions">
+        <button type="button" id="undo-btn" aria-label="Voltar um movimento" title="Voltar um movimento" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-2"/></svg>
+        </button>
+        <button type="button" class="help-btn" id="help-open" aria-label="Como jogar"
+          aria-haspopup="dialog" title="Como jogar">?</button>
+      </div>
     </header>
 
     <div class="scores">
@@ -468,6 +479,9 @@ let busy = false;  // trava entrada durante a animação
 let moveTimer = null; // timer da animação de move (p/ cancelar em Novo jogo)
 let firstMoveSent = false; // g2048_first_move: dispara só uma vez por carregamento de página
 let milestonesReached;     // Set: marcos de peça (128+) já reportados NESTA partida
+let undoState = null;      // snapshot lógico do estado ANTES do último movimento efetivo (one-shot)
+let winReported;           // flag monotônica p/ evt("g2048_win") não duplicar quando um undo "desfaz" a vitória e o jogador refaz o mesmo movimento
+const undoBtnEl = document.getElementById("undo-btn");
 
 // marcos de peça alta que reportamos ao analytics (uma vez por valor por jogo)
 const TILE_MILESTONES = [128, 256, 512, 1024, 2048];
@@ -504,11 +518,55 @@ function newGame() {
   keepPlaying = false;
   nextId = 1;
   milestonesReached = new Set();
+  winReported = false;
+  undoState = null;
+  updateUndoButton();
   scoreEl.textContent = 0;
   hideOverlay();
   addRandomTile();
   addRandomTile();
   evt("g2048_game_start", {});
+}
+
+// ---- Undo (1 passo, one-shot) ----
+// Snapshot é só do estado LÓGICO (grid[r][c].value), nunca dos objetos-peça (eles
+// carregam referência de DOM em .el e não fazem sentido "congelados").
+function snapshot() {
+  const cells = Array.from({ length: SIZE }, (_, r) =>
+    Array.from({ length: SIZE }, (_, c) => (grid[r][c] ? grid[r][c].value : null))
+  );
+  return { cells, score, won, keepPlaying };
+}
+
+function updateUndoButton() {
+  undoBtnEl.disabled = undoState === null;
+}
+
+function undo() {
+  if (busy) return;
+  if (undoState === null) return;
+
+  clearTimeout(moveTimer);
+
+  tilesEl.innerHTML = "";
+  grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const v = undoState.cells[r][c];
+      if (v !== null) grid[r][c] = createTile(r, c, v, false);
+    }
+  }
+
+  score = undoState.score;
+  won = undoState.won;
+  keepPlaying = undoState.keepPlaying;
+  updateScore();
+  hideOverlay();
+
+  undoState = null;
+  updateUndoButton();
+  evt("g2048_undo", {});
+  busy = false;
 }
 
 // ---- Peças ----
@@ -574,6 +632,10 @@ function move(v) {
   if (busy) return;
   if (won && !keepPlaying) return; // overlay de vitória aberto: bloqueia até Continuar/Jogar de novo
 
+  // snapshot tentativo do estado ANTES de mexer no grid; só vira o undoState se o
+  // movimento for efetivo (moved === true) — ver commit logo abaixo.
+  const snapBefore = snapshot();
+
   const { rs, cs } = traversals(v);
   let moved = false;
   const toRemove = [];
@@ -609,7 +671,8 @@ function move(v) {
         milestonesReached.add(nextTile.value);
         evt("g2048_tile_reached", { value: nextTile.value });
       }
-      if (nextTile.value === 2048 && !won) { won = true; evt("g2048_win", { score: score }); }
+      if (nextTile.value === 2048 && !won) { won = true; }
+      if (nextTile.value === 2048 && !winReported) { winReported = true; evt("g2048_win", { score: score }); }
       moved = true;
     } else if (far.r !== r || far.c !== c) {
       // MOVIMENTO simples até a casa mais distante possível
@@ -622,6 +685,11 @@ function move(v) {
   }));
 
   if (!moved) return;
+
+  // movimento efetivo: comita o snapshot capturado no início (permite 1 undo) e
+  // habilita o botão de voltar.
+  undoState = snapBefore;
+  updateUndoButton();
 
   // primeiro movimento efetivo da sessão (sinal de engajamento): só uma vez por página
   if (!firstMoveSent) { firstMoveSent = true; evt("g2048_first_move", {}); }
@@ -727,6 +795,7 @@ boardEl.addEventListener("touchend", (e) => {
 document.getElementById("new-game").addEventListener("click", newGame);
 document.getElementById("overlay-restart").addEventListener("click", newGame);
 overlayContinueEl.addEventListener("click", () => { keepPlaying = true; hideOverlay(); });
+document.getElementById("undo-btn").addEventListener("click", undo);
 
 // ---- Modal de ajuda "Como jogar" (independente da mecânica do jogo) ----
 // Espelha o comportamento do overlay do Ordem Secreta: abre pelo "?", fecha por botão,
