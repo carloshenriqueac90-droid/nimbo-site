@@ -443,6 +443,7 @@
         <li>No teclado, use as <b>setas</b> ou <b>WASD</b> para deslizar as peças.</li>
         <li>No celular, <b>arraste</b> (deslize) na direção desejada.</li>
         <li>Duas peças iguais que se encontram <b>se fundem</b> e somam.</li>
+        <li>Errou a jogada? Use o botão <b>voltar</b> (ao lado do "?") ou a tecla <b>Backspace</b> para <b>desfazer o último movimento</b>.</li>
       </ul>
       <div class="help-actions">
         <button type="button" class="btn" id="help-ok">Entendi</button>
@@ -766,6 +767,9 @@ function cleanupAnim(el, cls) {
 // ---- Entradas: teclado ----
 window.addEventListener("keydown", (e) => {
   if (helpOpen) return; // modal de ajuda aberto: não move o tabuleiro por trás
+  // Backspace (tecla "apagar") desfaz o último movimento — mesma ação do botão de voltar.
+  // preventDefault evita a navegação "voltar" do navegador; undo() é no-op se não há o que desfazer.
+  if (e.key === "Backspace") { e.preventDefault(); undo(); return; }
   let key = e.key;
   const wasd = { w: "ArrowUp", s: "ArrowDown", a: "ArrowLeft", d: "ArrowRight" };
   if (wasd[key.toLowerCase()]) key = wasd[key.toLowerCase()];
