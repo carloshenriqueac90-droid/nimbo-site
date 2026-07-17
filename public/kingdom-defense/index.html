@@ -3,35 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#1c2418">
+  <meta name="theme-color" content="#0b0d09">
   <title>Kingdom Defense</title>
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
   <div id="jogo">
-    <canvas id="tela"></canvas>
+    <!-- arena = exatamente a área do mapa; todo o HUD vive DENTRO dela -->
+    <div id="arena">
+      <canvas id="tela"></canvas>
+      <img id="moldura-jogo" src="./assets/ui/moldura_jogo.png" alt="" draggable="false">
 
-    <div id="hud-top">
-      <div class="chip">❤️ <span id="hudVidas">20</span></div>
-      <div class="chip"><img src="./assets/icone_ouro.png" class="icone-hud" alt="Ouro"> <span id="hudOuro">0</span></div>
-      <div class="chip"><img src="./assets/icone_madeira.png" class="icone-hud" alt="Madeira"> <span id="hudMadeira">0</span></div>
-      <div class="chip" id="chip-onda">Onda <span id="hudOnda">0/10</span></div>
-      <button id="btnMudo" class="chip" type="button" aria-label="Ativar/desativar som">🔊</button>
-      <input id="sliderVolume" type="range" min="0" max="100" step="5" aria-label="Volume">
-      <div id="barra-onda-fundo"><div id="barraOnda"></div></div>
-    </div>
+      <div id="hud-top">
+        <div class="hud-lado">
+          <div class="chip">❤️ <span id="hudVidas">20</span></div>
+          <div class="chip"><img src="./assets/icone_ouro.png" class="icone-hud" alt="Gold"> <span id="hudOuro">0</span></div>
+          <div class="chip"><img src="./assets/icone_madeira.png" class="icone-hud" alt="Wood"> <span id="hudMadeira">0</span></div>
+        </div>
+        <div class="hud-lado">
+          <button id="btnMudo" class="chip" type="button" aria-label="Toggle sound">🔊</button>
+          <input id="sliderVolume" type="range" min="0" max="100" step="5" aria-label="Volume">
+        </div>
+      </div>
 
-    <div id="hud-bottom">
-      <button id="btnOnda">▶ Iniciar Onda</button>
-      <button id="btnVel">⏩ x1</button>
-      <button id="btnRecuar">🏰 Recuar Trabalhadores</button>
-      <button id="btnRetomar">⛏ Retomar Coleta</button>
+      <!-- info da onda: centralizada logo abaixo da moldura superior -->
+      <div id="hud-onda">
+        <div class="chip" id="chip-onda">Wave <span id="hudOnda">0/10</span></div>
+        <div id="barra-onda-fundo"><div id="barraOnda"></div></div>
+      </div>
+
+      <!-- barra inferior: arte cortada + hotspots clicáveis por cima (5 no normal, 3 no caos) -->
+      <div id="barraInferior" class="menu-img">
+        <img class="menu-fundo" src="./assets/ui/barra_normal.png" alt="" draggable="false">
+        <button id="btnRecuar" class="menu-hot pos-1" type="button" aria-label="Retreat workers"></button>
+        <button id="btnVel" class="menu-hot pos-2" type="button" aria-label="Game speed"></button>
+        <button id="btnOnda" class="menu-hot pos-3" type="button" aria-label="Start wave"></button>
+        <button id="btnRetomar" class="menu-hot pos-4" type="button" aria-label="Resume gathering"></button>
+        <button id="btnMenuJogo" class="menu-hot pos-5" type="button" aria-label="Menu"></button>
+        <span id="lblOnda"></span>
+      </div>
+
+      <div id="painelMenu" class="oculto"></div>
+      <div id="toast" class="toast oculto"></div>
+      <div id="overlay" class="oculto"></div>
     </div>
 
     <div id="menuContexto" class="oculto"></div>
-    <div id="toast" class="toast oculto"></div>
-    <div id="dica-girar">🔄 Gire o celular para uma visão melhor</div>
-    <div id="overlay" class="oculto"></div>
+    <div id="dica-girar">🔄 Rotate your phone for a better view</div>
   </div>
 
   <script type="module" src="./js/main.js"></script>
