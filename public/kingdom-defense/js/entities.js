@@ -4,10 +4,11 @@
 // (cacador, voador, revive, invoca) → fácil criar tipos novos.
 // ============================================================
 
-import { INIMIGOS, TORRES, UPGRADE, ECONOMIA, TRABALHADOR } from './config.js';
-import { CASTELO, ROTAS } from './map.js';
+import { INIMIGOS, TORRES, UPGRADE, ECONOMIA, TRABALHADOR, LAB } from './config.js';
+import { CASTELO, ROTAS, MODO } from './map.js';
+import { multDano, multCadencia, especialAtivo, especialParams } from './lab.js';
 import { dist, moverPara, SeguidorRota, indiceSegProximo } from './util.js';
-import { sprite, desenharAncoradoBase } from './sprites.js';
+import { sprite, animacao, FRAMES_ANIM, desenharAncoradoBase } from './sprites.js';
 import { tocar } from './sound.js';
 
 // largura de exibição de cada sprite de inimigo, em px de mundo (altura = aspecto da imagem)
@@ -15,14 +16,28 @@ const TAMANHO_SPRITE_INIMIGO = {
   goblin: 46,
   orc: 64,
   lobo: 78,
-  esqueleto: 46,
+  esqueleto: 48,
   ogro: 76,
   voador: 54,
   golem: 92,
   reiGoblin: 98,
 };
 
+// lado para o qual a arte original olha (-1 = esquerda, 1 = direita)
+const LADO_SPRITE_INIMIGO = { lobo: 1 };
+// lado para o qual cada sheet animado olha (-1 = esquerda, 1 = direita).
+// Conferido frame a frame: os personagens viram durante o vídeo, então o
+// lado é o da janela de amostragem, não o do quadro inicial.
+const LADO_ANIM = { lobo: 1, orc: 1, ogro: 1, reiGoblin: 1, goblin: 1, golem: 1, trabalhador: 1, esqueleto: 1 };
+
 let proximoId = 1;
+
+// Madeira solta pelo chefe final (Rei Goblin nas ondas 10, 20, 30, ...).
+// Ondas 10 e 20: madeira = ouro do chefe. Depois: sempre o DOBRO do chefe anterior.
+function madeiraChefe(onda, ouroBase) {
+  const k = Math.max(1, Math.round(onda / 10)); // 1 na onda 10, 2 na 20, 3 na 30, ...
+  return k <= 2 ? ouroBase : ouroBase * Math.pow(2, k - 2);
+}
 
 // ---------------------------------------------------------- Efeito
 export class Efeito {
@@ -85,6 +100,7 @@ export class Inimigo {
     this.tInvoca = 4;
     this.pausa = 0;
     this.anim = Math.random() * 7;
+    this.dir = -1; // marcham para oeste (castelo) por padrão
   }
 
   distCastelo() {
@@ -92,23 +108,40 @@ export class Inimigo {
   }
 
   update(dt, state) {
-    this.anim += dt * 6;
     // Esqueleto "morto" aguardando reviver
     if (this.morto) {
       this.tRevive -= dt;
       if (this.tRevive <= 0) { this.morto = false; this.hp = Math.round(this.hpMax * 0.5); }
       return;
     }
+    // queimadura (dano ao longo do tempo, ignora armadura)
+    if (this.queimaT > 0) {
+      this.queimaT -= dt;
+      this.takeDano(this.queimaDps * dt, 'magico', state);
+      if (this.remover || this.morto) return;
+    }
+    // congelamento: para o inimigo por um tempo (não anda, mas continua queimando)
+    if (this.congeladoT > 0) { this.congeladoT -= dt; return; }
     if (this.slowT > 0) this.slowT -= dt;
     if (this.pausa > 0) { this.pausa -= dt; return; }
 
     const v = this.velEfetiva();
-    if (this.def.cacador) this.updateCacador(dt, state, v);
+    // fase do passo acompanha a velocidade real (lentidão do gelo desacelera o passo junto)
+    this.anim += dt * (this.def.voador ? 6 : 1.5 + v * 0.12);
+    const x0 = this.x;
+    if (this.def.cacador && MODO !== 'caos') this.updateCacador(dt, state, v);
     else if (this.def.voador) this.updateLivre(dt, state);
     else {
       this.seg.avancar(v * dt);
       this.x = this.seg.x; this.y = this.seg.y;
       if (this.seg.fim) this.chegouCastelo(state);
+    }
+    // vetor de movimento suavizado: o sprite olha para onde está andando.
+    // A média móvel + histerese evita tremer em trechos verticais e vira
+    // rápido em curvas e diagonais (sem "andar de costas").
+    if (dt > 0) {
+      this.vx = (this.vx ?? 0) * 0.8 + ((this.x - x0) / dt) * 0.2;
+      if (Math.abs(this.vx) > v * 0.15) this.dir = this.vx > 0 ? 1 : -1;
     }
 
     // Chefe invocador (Rei Goblin)
@@ -122,7 +155,7 @@ export class Inimigo {
           if (g.seg) { g.seg.i = this.seg ? this.seg.i : 0; g.seg.x = g.x; g.seg.y = g.y; }
           state.inimigos.push(g);
         }
-        efeitoTexto(state, this.x, this.y - 26, 'Invocou!', '#a6f77b');
+        efeitoTexto(state, this.x, this.y - 26, 'Summoned!', '#a6f77b');
       }
     }
   }
@@ -132,6 +165,7 @@ export class Inimigo {
   // volta ao ponto da rota de onde saiu e retoma a marcha ao castelo.
   // Velocidade após efeito de lentidão (torre de gelo).
   velEfetiva() {
+    if (this.congeladoT > 0) return 0;
     return this.slowT > 0 ? this.vel * this.slowFator : this.vel;
   }
 
@@ -139,6 +173,14 @@ export class Inimigo {
   aplicarSlow(fator, dur) {
     this.slowFator = this.slowT > 0 ? Math.min(this.slowFator, fator) : fator;
     this.slowT = Math.max(this.slowT || 0, dur);
+  }
+
+  // Congela o inimigo (imóvel) por `dur` segundos; mantém a maior duração pendente.
+  aplicarCongelamento(dur) { this.congeladoT = Math.max(this.congeladoT || 0, dur); }
+  // Queimadura: dano ao longo do tempo (dps) por `dur` segundos; mantém o maior dps/duração pendente.
+  aplicarQueimadura(dps, dur) {
+    this.queimaDps = Math.max(this.queimaDps || 0, dps);
+    this.queimaT = Math.max(this.queimaT || 0, dur);
   }
 
   updateCacador(dt, state, v = this.vel) {
@@ -194,6 +236,13 @@ export class Inimigo {
         this.remover = true;
         state.ouro += this.def.ouro;
         efeitoTexto(state, this.x, this.y - 14, `+${this.def.ouro}`, '#ffd166', 'icone_ouro');
+        // Chefe final (Rei Goblin, ondas múltiplas de 10) solta MADEIRA:
+        // até a onda 20 = igual ao ouro; depois dobra a cada chefe.
+        if (this.tipo === 'reiGoblin') {
+          const mad = madeiraChefe(state.onda, this.def.ouro);
+          state.madeira += mad;
+          efeitoTexto(state, this.x + 8, this.y - 34, `+${mad}`, '#c98d4b', 'icone_madeira');
+        }
         // criaturas maiores soam mais graves (pitch inversamente prop. ao raio)
         const pitch = Math.max(0.6, Math.min(1.4, 1.3 - this.def.raio * 0.012));
         tocar('morte', { volume: 0.5, pitch });
@@ -210,23 +259,59 @@ export class Inimigo {
       c.beginPath(); c.ellipse(this.x, this.y + 4, raio, raio * 0.45, 0, 0, 7); c.fill();
       return;
     }
-    // sombra no chão
-    c.fillStyle = 'rgba(0,0,0,0.25)';
-    c.beginPath(); c.ellipse(this.x, this.y + raio * 0.9, raio * 1.1, raio * 0.4, 0, 0, 7); c.fill();
+    // sombra no chão — só para inimigos aéreos (mostra que estão voando)
+    if (this.def.voador) {
+      c.fillStyle = 'rgba(0,0,0,0.25)';
+      c.beginPath(); c.ellipse(this.x, this.y + raio * 0.9, raio * 1.1, raio * 0.4, 0, 0, 7); c.fill();
+    }
 
     // aura de gelo quando lento (halo azulado atrás do corpo)
     if (this.slowT > 0) {
       c.fillStyle = 'rgba(140,215,255,0.28)';
       c.beginPath(); c.arc(this.x, y, raio * 1.35, 0, 7); c.fill();
     }
+    // aura de congelamento (por cima, mais intensa — o inimigo está imóvel)
+    if (this.congeladoT > 0) {
+      c.fillStyle = 'rgba(150,220,255,0.4)';
+      c.beginPath(); c.arc(this.x, y, raio * 1.4, 0, 7); c.fill();
+    }
+    // brilho de queimadura (chamazinha alaranjada acima do corpo)
+    if (this.queimaT > 0) {
+      c.fillStyle = 'rgba(255,140,40,0.55)';
+      c.beginPath(); c.arc(this.x, y - raio * 0.9, raio * 0.35, 0, 7); c.fill();
+    }
 
     const tamW = TAMANHO_SPRITE_INIMIGO[this.tipo];
     const img = tamW ? sprite(this.tipo) : null;
+    const anim = tamW ? animacao(this.tipo) : null;
     let desenhouSprite = false, topoSprite = null;
-    if (img) {
+    if (anim) {
+      // spritesheet animado: o frame acompanha a fase do passo (this.anim)
+      const fw = anim.width / FRAMES_ANIM, fh = anim.height;
+      const h = tamW * (fh / fw);
+      const yBase = y + raio * 0.9;
+      const idx = Math.floor(this.anim * 1.2) % FRAMES_ANIM;
+      c.save();
+      c.translate(this.x, yBase);
+      c.scale(this.dir * (LADO_ANIM[this.tipo] ?? -1), 1);
+      c.drawImage(anim, idx * fw, 0, fw, fh, -tamW / 2, -h, tamW, h);
+      c.restore();
+      desenhouSprite = true;
+      topoSprite = yBase - h;
+    } else if (img) {
       const h = tamW * (img.height / img.width);
       const yBase = y + raio * 0.9; // pés alinhados com a sombra
-      c.drawImage(img, this.x - tamW / 2, yBase - h, tamW, h);
+      // caminhada: quique no passo + balanço lateral, ancorados nos pés
+      const passo = Math.sin(this.anim);
+      const parado = this.pausa > 0;
+      const quique = this.def.voador || parado ? 0 : Math.abs(passo) * raio * 0.18;
+      const balanco = parado ? 0 : passo * (this.def.voador ? 0.05 : 0.08);
+      c.save();
+      c.translate(this.x, yBase - quique);
+      c.rotate(balanco);
+      c.scale(this.dir * (LADO_SPRITE_INIMIGO[this.tipo] ?? -1), 1 + quique / (h * 2));
+      c.drawImage(img, -tamW / 2, -h, tamW, h);
+      c.restore();
       desenhouSprite = true;
       topoSprite = yBase - h;
     }
@@ -289,6 +374,8 @@ export class Trabalhador {
     this.rota = site.rota;                          // sítio → castelo
     this.rotaInv = [...site.rota].reverse();        // castelo → sítio
     this.carregando = false;
+    this.anim = Math.random() * 7;
+    this.dir = -1; // sentido atual do movimento; o lado do sheet vem de LADO_ANIM
     if (abrigado) {
       this.estado = 'abrigado';
       this.x = CASTELO.x; this.y = CASTELO.y;
@@ -305,6 +392,9 @@ export class Trabalhador {
     // espera escalonada (evita todos saírem juntos e sobrepor os sprites)
     if (this.tEspera > 0) { this.tEspera -= dt; return; }
     const v = TRABALHADOR.vel * (this.estado === 'recuando' ? TRABALHADOR.velRecuo : 1);
+    const x0 = this.x;
+    const andando = this.estado === 'entregando' || this.estado === 'recuando' || this.estado === 'voltando';
+    if (andando) this.anim += dt * (1.5 + v * 0.12);
     switch (this.estado) {
       case 'coletando':
         this.tColeta -= dt;
@@ -340,13 +430,20 @@ export class Trabalhador {
       case 'abrigado':
         break;
     }
+    // vetor de movimento suavizado: olha para onde anda (ida e volta da rota)
+    if (andando && dt > 0) {
+      this.vx = (this.vx ?? 0) * 0.8 + ((this.x - x0) / dt) * 0.2;
+      if (Math.abs(this.vx) > v * 0.15) this.dir = this.vx > 0 ? 1 : -1;
+    }
   }
 
   entregar(state) {
     const def = ECONOMIA[this.construcao.tipo];
-    state[def.recurso] += def.porViagem;
     const ouro = def.recurso === 'ouro';
-    efeitoTexto(state, CASTELO.x + 30, CASTELO.y - 30, `+${def.porViagem}`, ouro ? '#ffd166' : '#c98d4b', ouro ? 'icone_ouro' : 'icone_madeira');
+    // quantidade por viagem: no caos usa a coleta melhorável do estado; senão o padrão da construção
+    const qtd = ouro ? (state.coletaOuro ?? def.porViagem) : (state.coletaMadeira ?? def.porViagem);
+    state[def.recurso] += qtd;
+    efeitoTexto(state, CASTELO.x + 30, CASTELO.y - 30, `+${qtd}`, ouro ? '#ffd166' : '#c98d4b', ouro ? 'icone_ouro' : 'icone_madeira');
     tocar(ouro ? 'moeda' : 'madeira', { volume: 0.4 });
     this.carregando = false;
   }
@@ -391,15 +488,22 @@ export class Trabalhador {
     this.remover = true;
     this.construcao.agendarRespawn();
     state.efeitos.push(new Efeito({ tipo: 'explosao', x: this.x, y: this.y, r: 14, t: 0.3 }));
-    efeitoTexto(state, this.x, this.y - 16, 'Trabalhador perdido!', '#ff6b6b');
+    efeitoTexto(state, this.x, this.y - 16, 'Worker lost!', '#ff6b6b');
   }
 
   desenhar(c) {
     if (this.estado === 'abrigado') return;
-    // sombra
-    c.fillStyle = 'rgba(0,0,0,0.2)';
-    c.beginPath(); c.ellipse(this.x, this.y + 7, 7, 3, 0, 0, 7); c.fill();
-    if (!desenharAncoradoBase(c, 'trabalhador', this.x, this.y + 8, 22)) {
+    const anim = animacao('trabalhador');
+    if (anim) {
+      const fw = anim.width / FRAMES_ANIM, fh = anim.height;
+      const w = 22, h = w * (fh / fw);
+      const idx = Math.floor(this.anim * 1.2) % FRAMES_ANIM;
+      c.save();
+      c.translate(this.x, this.y + 8);
+      c.scale(this.dir * (LADO_ANIM.trabalhador ?? -1), 1);
+      c.drawImage(anim, idx * fw, 0, fw, fh, -w / 2, -h, w, h);
+      c.restore();
+    } else if (!desenharAncoradoBase(c, 'trabalhador', this.x, this.y + 8, 22)) {
       // fallback procedural
       c.fillStyle = '#3867d6';
       c.beginPath(); c.arc(this.x, this.y, 5.5, 0, 7); c.fill();
@@ -433,7 +537,7 @@ export class Construcao {
   }
   contratar(state) {
     state.trabalhadores.push(new Trabalhador(this.site, this, state.recuados));
-    efeitoTexto(state, this.site.x, this.site.y - 24, 'Trabalhador contratado!', '#a6f77b');
+    efeitoTexto(state, this.site.x, this.site.y - 24, 'Worker hired!', '#a6f77b');
   }
   update(dt, state) {
     for (let i = this.filaRespawn.length - 1; i >= 0; i--) {
@@ -441,7 +545,7 @@ export class Construcao {
       if (this.filaRespawn[i] <= 0) {
         this.filaRespawn.splice(i, 1);
         state.trabalhadores.push(new Trabalhador(this.site, this, state.recuados));
-        efeitoTexto(state, this.site.x, this.site.y - 24, 'Novo trabalhador', '#a6f77b');
+        efeitoTexto(state, this.site.x, this.site.y - 24, 'New worker', '#a6f77b');
       }
     }
   }
@@ -481,16 +585,25 @@ export class Torre {
     this.base = TORRES[tipo];
     this.nivel = 1;
     this.cooldown = 0;
+    this.especialCd = 0;
     this.calcularStats();
   }
   calcularStats() {
     const n = this.nivel - 1;
-    this.dano = Math.round(this.base.dano * Math.pow(UPGRADE.multDano, n));
+    this.dano = Math.round(this.base.dano * Math.pow(UPGRADE.multDano, n) * multDano());
     this.alcance = Math.round(this.base.alcance * Math.pow(UPGRADE.multAlcance, n));
-    this.cadencia = this.base.cadencia * Math.pow(UPGRADE.multCadencia, n);
+    this.cadencia = this.base.cadencia * Math.pow(UPGRADE.multCadencia, n) * multCadencia();
   }
   custoUpgrade() { return UPGRADE.custo(this.base, this.nivel); }
   update(dt, state) {
+    // ataque especial (liberado no laboratório) — dispara sozinho no cooldown
+    if (especialAtivo(this.tipo)) {
+      this.especialCd -= dt;
+      if (this.especialCd <= 0 && this._temAlvo(state)) {
+        this.usarEspecial(state);
+        this.especialCd = especialParams(this.tipo).cooldown;
+      }
+    }
     this.cooldown -= dt;
     if (this.cooldown > 0) return;
     let alvo = null, melhor = Infinity;
@@ -506,6 +619,65 @@ export class Torre {
       this.cooldown = this.cadencia;
       const volTiro = { arqueiro: 0.3, canhao: 0.5, magica: 0.35, gelo: 0.35 };
       tocar(`tiro_${this.tipo}`, { volume: volTiro[this.tipo] ?? 0.4 });
+    }
+  }
+  // alvos válidos dentro do alcance (respeita antiAereo), ordenados por proximidade do castelo
+  _alvosNoAlcance(state, max = 1) {
+    const lista = [];
+    for (const e of state.inimigos) {
+      if (e.remover || e.morto) continue;
+      if (e.def.voador && !this.base.antiAereo) continue;
+      if (dist(this, e) > this.alcance) continue;
+      lista.push(e);
+    }
+    lista.sort((a, b) => a.distCastelo() - b.distCastelo());
+    return lista.slice(0, max);
+  }
+  _temAlvo(state) { return this._alvosNoAlcance(state, 1).length > 0; }
+  // dispara o ataque especial do laboratório, conforme o tipo e o TIER ativo
+  usarEspecial(state) {
+    const esp = especialParams(this.tipo);
+    if (!esp) return;
+    if (this.tipo === 'arqueiro') {
+      // múltiplos ataques: uma flecha em cada um dos N alvos mais próximos
+      const alvos = this._alvosNoAlcance(state, esp.alvos);
+      for (const a of alvos) {
+        const p = new Projetil(this, a);
+        p.dano = Math.round(this.dano * (esp.multDano || 1));
+        state.projeteis.push(p);
+      }
+      tocar('tiro_arqueiro', { volume: 0.5 });
+    } else if (this.tipo === 'canhao') {
+      // bola de fogo: explosão em área que causa dano e QUEIMA os inimigos
+      const alvo = this._alvosNoAlcance(state, 1)[0];
+      if (!alvo) return;
+      const p = new Projetil(this, alvo);
+      p.area = esp.raio;
+      p.dano = esp.dano;
+      p.queima = esp.queima;           // {dps,dur} → aplicado no impacto em área
+      p.corEspecial = '#ff7b1e';
+      state.projeteis.push(p);
+      tocar('tiro_canhao', { volume: 0.55 });
+    } else if (this.tipo === 'magica') {
+      // dano massivo no alvo + respingo mágico ao redor
+      const alvo = this._alvosNoAlcance(state, 1)[0];
+      if (!alvo) return;
+      alvo.takeDano(Math.round(this.dano * esp.multDano), 'magico', state);
+      state.efeitos.push(new Efeito({ tipo: 'explosao', x: alvo.x, y: alvo.y, r: esp.respingo, t: 0.4 }));
+      const fracResp = esp.fracRespingo ?? 0.4;
+      for (const e of state.inimigos) {
+        if (e === alvo || e.remover || e.morto) continue;
+        if (dist(alvo, e) <= esp.respingo) e.takeDano(Math.round(this.dano * esp.multDano * fracResp), 'magico', state);
+      }
+      tocar('impacto_magica', { volume: 0.6 });
+    } else if (this.tipo === 'gelo') {
+      // congela todos os inimigos num raio ao redor da torre
+      for (const e of state.inimigos) {
+        if (e.remover || e.morto) continue;
+        if (dist(this, e) <= esp.raio) e.aplicarCongelamento(esp.dur);
+      }
+      state.efeitos.push(new Efeito({ tipo: 'explosao', x: this.x, y: this.y, r: esp.raio, t: 0.45, variante: 'gelo' }));
+      tocar('impacto_magica', { volume: 0.5 });
     }
   }
   desenhar(c, state = null) {
@@ -592,6 +764,7 @@ export class Projetil {
         if (dist(this, e) <= this.area) {
           e.takeDano(this.dano, this.tipoDano, state);
           if (this.slow) e.aplicarSlow(this.slow.fator, this.slow.dur);
+          if (this.queima) e.aplicarQueimadura(this.queima.dps, this.queima.dur);
         }
       }
     } else if (!this.alvo.remover && !this.alvo.morto && dist(this, this.alvo) < 16) {
@@ -602,7 +775,7 @@ export class Projetil {
     }
   }
   desenhar(c) {
-    c.fillStyle = this.cor;
+    c.fillStyle = this.corEspecial || this.cor;
     c.beginPath(); c.arc(this.x, this.y, this.area ? 5 : 3.5, 0, 7); c.fill();
   }
 }

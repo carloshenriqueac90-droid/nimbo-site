@@ -7,6 +7,9 @@
 const CAMINHOS = {
   terreno: './assets/terreno.jpg',
   terreno2: './assets/terreno2.jpg',
+  terreno3: './assets/terreno3.jpg',
+  caos: './assets/caos.png',
+  lab: './assets/lab.png',
   icone_ouro: './assets/icone_ouro.png',
   icone_madeira: './assets/icone_madeira.png',
   // recorte do castelo do próprio terreno pintado (para oclusão por profundidade)
@@ -41,20 +44,43 @@ const CAMINHOS = {
   gelo_4: './assets/torre_gelo_4.png',
 };
 
+// Spritesheets animados (tira horizontal de FRAMES_ANIM frames por arquivo,
+// pés ancorados na base). Quem não tiver sheet cai no sprite estático.
+export const FRAMES_ANIM = 12;
+const CAMINHOS_ANIM = {
+  goblin: './assets/anim/goblin.png',
+  golem: './assets/anim/golem.png',
+  lobo: './assets/anim/lobo.png',
+  ogro: './assets/anim/ogro.png',
+  reiGoblin: './assets/anim/reiGoblin.png',
+  voador: './assets/anim/voador.png',
+  trabalhador: './assets/anim/trabalhador.png',
+  orc: './assets/anim/orc.png',
+  esqueleto: './assets/anim/esqueleto.png',
+};
+
 const cache = {};
+const cacheAnim = {};
 
 export function precarregar() {
-  const promessas = Object.entries(CAMINHOS).map(([nome, src]) => new Promise(resolve => {
+  const carregar = (destino, nome, src) => new Promise(resolve => {
     const img = new Image();
-    img.onload = () => { cache[nome] = img; resolve(); };
+    img.onload = () => { destino[nome] = img; resolve(); };
     img.onerror = () => resolve(); // segue sem o sprite; quem desenha usa fallback
     img.src = src;
-  }));
-  return Promise.all(promessas);
+  });
+  return Promise.all([
+    ...Object.entries(CAMINHOS).map(([n, s]) => carregar(cache, n, s)),
+    ...Object.entries(CAMINHOS_ANIM).map(([n, s]) => carregar(cacheAnim, n, s)),
+  ]);
 }
 
 export function sprite(nome) {
   return cache[nome] || null;
+}
+
+export function animacao(nome) {
+  return cacheAnim[nome] || null;
 }
 
 // Desenha a imagem ancorada pela base (bottom-center) em (x, yBase), com largura alvo.

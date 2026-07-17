@@ -16,17 +16,18 @@ export const ALTURA = 640;
 // ============================================================
 export const MAPAS = [
   {
-    nome: 'Reino Verde',
+    nome: 'Green Kingdom',
     icone: '🌲',
     terreno: 'terreno',
     castelo: { x: 305, y: 312, raio: 46 },
     // recorte do castelo (PNG transparente) p/ oclusão por profundidade
     recorte: { key: 'casteloRecorte', x: 205, y: 150, w: 205, h: 215, base: 350 },
-    // Rotas das WAVES (inimigos): leste-A, leste-B, norte → castelo (à esquerda).
+    // Rotas das WAVES (inimigos), traçadas sobre as estradas pintadas do
+    // terreno: leste-A (ponte de cima), leste-B (ponte de baixo), norte → castelo.
     rotas: [
-      [[985, 160], [845, 168], [792, 172], [705, 210], [625, 230], [535, 256], [450, 266], [372, 294], [318, 308]],
-      [[985, 485], [845, 478], [800, 468], [710, 452], [616, 428], [536, 396], [458, 376], [392, 344], [320, 318]],
-      [[612, -20], [606, 70], [588, 140], [546, 196], [494, 232], [432, 262], [368, 290], [318, 306]],
+      [[925, 155], [850, 153], [800, 165], [755, 174], [705, 189], [655, 205], [605, 224], [555, 240], [510, 253], [487, 258], [450, 276], [405, 295], [365, 310], [338, 318]],
+      [[915, 487], [845, 486], [795, 482], [745, 472], [700, 456], [655, 438], [610, 422], [565, 404], [520, 388], [478, 372], [438, 356], [400, 340], [365, 327], [342, 320]],
+      [[608, 10], [602, 58], [592, 105], [574, 145], [550, 178], [526, 203], [506, 228], [492, 250], [470, 265], [435, 283], [395, 299], [360, 311], [338, 318]],
     ],
     // Estradas comerciais (trabalhadores), separadas das rotas das waves.
     sites: [
@@ -40,10 +41,10 @@ export const MAPAS = [
       [445, 300], [575, 320],
       [838, 428], [655, 408], [438, 428], [575, 485],
     ],
-    portais: [[946, 160], [946, 488], [612, 14]],
+    portais: [[925, 155], [915, 487], [608, 10]],
   },
   {
-    nome: 'Terras de Lava',
+    nome: 'Lava Lands',
     icone: '🌋',
     terreno: 'terreno2',
     castelo: { x: 482, y: 148, raio: 52 },
@@ -71,7 +72,6 @@ export const MAPAS = [
     sites: [
       { tipo: 'madeireira', x: 95, y: 455,  rota: [[95, 455], [142, 388], [314, 323], [325, 283], [353, 257], [371, 215], [408, 185]] },
       { tipo: 'mina',       x: 850, y: 467, rota: [[850, 467], [822, 455], [810, 415], [731, 393], [702, 316], [640, 264], [629, 222], [576, 195], [530, 150]] },
-      { tipo: 'mina',       x: 578, y: 597, rota: [[578, 597], [568, 562], [518, 515], [516, 494], [530, 463], [615, 428], [622, 380], [570, 345], [561, 322], [577, 282], [620, 258], [633, 236], [621, 214], [569, 188], [530, 150]] },
     ],
     plataformas: [
       [530, 320], [390, 250], [340, 350], [430, 390], [690, 340], [250, 300], [300, 210], [600, 460],
@@ -79,12 +79,94 @@ export const MAPAS = [
     ],
     portais: [[271, 96], [113, 185], [63, 353], [70, 510], [747, 100], [850, 207], [897, 353], [867, 520], [446, 612]],
   },
+  {
+    nome: 'Dark Forest',
+    icone: '🌲',
+    terreno: 'terreno3',
+    castelo: { x: 487, y: 268, raio: 46 },
+    // recorte do próprio terreno pintado sobre a região do castelo (oclusão por profundidade)
+    recorte: { key: null, x: 430, y: 185, w: 120, h: 125, base: 302 },
+    // Rotas traçadas sobre as estradas pintadas (desenhos do Gabriel).
+    // Portais azul e vermelho têm BIFURCAÇÃO — cada onda usa um braço:
+    // 0 roxo · 1 azul-A (ponte oeste) · 2 azul-B (ponte sudoeste) · 3 verde ·
+    // 4 vermelho-A (corredor alto) · 5 vermelho-B (pelo leste) · 6 CHEFE
+    // (entra pela direita perto do moinho, ponte SE, entroncamento sul, diagonal, castelo).
+    rotas: [
+      [[62, 58], [88, 92], [115, 122], [142, 152], [170, 177], [205, 192], [245, 200], [280, 207], [305, 215], [340, 227], [370, 240], [400, 250], [432, 258], [455, 262]],
+      [[48, 265], [80, 288], [118, 297], [152, 300], [182, 287], [210, 270], [232, 254], [255, 240], [280, 228], [305, 215], [340, 227], [370, 240], [400, 250], [432, 258], [455, 262]],
+      [[48, 265], [80, 288], [118, 297], [142, 302], [158, 325], [172, 350], [190, 372], [215, 390], [243, 400], [270, 385], [298, 368], [330, 350], [362, 340], [392, 333], [418, 322], [440, 312], [465, 305]],
+      [[88, 518], [125, 520], [152, 508], [178, 490], [200, 468], [218, 443], [232, 420], [243, 400], [258, 385], [278, 372], [305, 358], [332, 348], [362, 340], [392, 333], [418, 322], [440, 312], [465, 305]],
+      [[812, 68], [800, 100], [790, 132], [782, 163], [770, 192], [748, 210], [712, 222], [672, 230], [632, 238], [592, 246], [558, 255], [535, 262]],
+      [[812, 68], [800, 100], [790, 132], [782, 163], [770, 195], [758, 222], [765, 255], [772, 292], [758, 330], [725, 352], [688, 366], [650, 372], [612, 368], [578, 352], [555, 330], [538, 308]],
+      [[888, 548], [876, 524], [858, 506], [838, 490], [818, 475], [798, 462], [780, 436], [762, 410], [742, 393], [706, 391], [668, 393], [640, 396], [630, 408], [612, 424], [590, 440], [570, 456], [561, 472], [542, 486], [520, 493], [498, 491], [476, 489], [458, 476], [449, 458], [444, 438], [430, 422], [400, 410], [372, 398], [360, 380], [363, 362], [376, 347], [394, 336], [412, 328], [430, 322]],
+    ],
+    // Coleta: 2 madeireiras na mata ao norte (círculos vermelhos) e 1 mina de ouro
+    // na saída sul (círculo amarelo) — a rota 4 dos chefes passa ao lado dela.
+    // Trabalhadores pelo corredor magenta do Gabriel: madeireiras descem o corredor
+    // x~545 até o castelo; mina sobe pela estrada SE (lado DIREITO do castelo).
+    sites: [
+      { tipo: 'mina', x: 525, y: 112, rota: [[525, 112], [540, 135], [545, 172], [548, 210], [540, 240], [527, 262], [512, 275]] },
+      { tipo: 'mina', x: 628, y: 59, rota: [[628, 59], [652, 90], [656, 120], [640, 140], [610, 150], [580, 146], [555, 140], [545, 172], [548, 210], [540, 240], [527, 262], [512, 275]] },
+    ],
+    plataformas: [
+      [164, 143], [146, 276], [565, 230], [820, 210], [822, 452],
+      [250, 300], [360, 290], [415, 375], [548, 370], [672, 390], [595, 318], [790, 305], [820, 540],
+    ],
+    portais: [[62, 58], [48, 265], [88, 518], [812, 68]],
+  },
+  {
+    // ---- MAPA DO MODO CAOS ----
+    // 4 rotas de invasão vindas do leste (4 portais) convergem no castelo.
+    // Atrás do castelo (oeste) há 5 estradas de coleta: 3 minas + 2 madeireiras.
+    // A parte sudoeste fica livre para o Laboratório (upgrades globais).
+    nome: 'Chaos',
+    icone: '🌀',
+    caos: true,
+    terreno: 'caos',
+    castelo: { x: 212, y: 266, raio: 46 },
+    // recorte do próprio terreno pintado sobre a região do castelo (oclusão por profundidade)
+    recorte: { key: null, x: 148, y: 165, w: 132, h: 142, base: 300 },
+    // Laboratório fixo no canto sudoeste (parte vazia do mapa).
+    lab: { x: 196, y: 470 },
+    // Rotas dos monstros: portal (leste) → curva → castelo (212,266).
+    rotas: [
+      [[881, 85], [836, 86], [768, 114], [699, 141], [630, 136], [561, 125], [492, 114], [430, 128], [372, 178], [322, 232], [272, 258], [212, 266]],
+      [[871, 193], [836, 193], [768, 218], [699, 232], [630, 231], [561, 224], [492, 219], [432, 232], [372, 248], [312, 260], [252, 264], [212, 266]],
+      [[880, 311], [836, 316], [768, 335], [699, 336], [630, 330], [561, 334], [492, 340], [432, 332], [372, 312], [312, 288], [258, 272], [212, 266]],
+      [[877, 432], [836, 447], [768, 443], [699, 446], [630, 435], [561, 439], [492, 439], [438, 420], [388, 372], [332, 318], [282, 286], [238, 272], [212, 266]],
+    ],
+    // Estradas comerciais (trabalhadores): sítio → castelo, pelos spokes oeste.
+    // Marcadores encostados na trilha (snap por detecção de estrada).
+    sites: [
+      { tipo: 'mina',       x: 201, y: 149, rota: [[201, 149], [204, 190], [208, 228], [210, 258]] },
+      { tipo: 'mina',       x: 91,  y: 189, rota: [[91, 189], [134, 210], [168, 233], [198, 255]] },
+      { tipo: 'mina',       x: 80,  y: 276, rota: [[80, 276], [120, 262], [160, 262], [196, 265]] },
+      { tipo: 'madeireira', x: 115, y: 347, rota: [[115, 347], [140, 320], [172, 296], [200, 278]] },
+      { tipo: 'madeireira', x: 206, y: 392, rota: [[206, 392], [209, 352], [211, 314], [212, 286]] },
+    ],
+    // 4 colunas externas nas aberturas entre as rotas + cluster interno perto do
+    // castelo (2 movidas + 3 novas) para defender o entroncamento.
+    plataformas: [
+      [520, 165], [620, 175], [720, 180], [795, 168],
+      [470, 272], [560, 278], [660, 282], [760, 286],
+      [520, 388], [620, 392], [720, 396], [792, 424],
+      [345, 192], [345, 345],
+      [418, 166], [366, 270], [418, 366],
+    ],
+    portais: [[881, 85], [871, 193], [880, 311], [877, 432]],
+  },
 ];
 
+// Modo ativo: 'caos' força o mapa do caos; 'normal' usa a seleção salva.
+export const MODO = localStorage.getItem('kd-modo') === 'caos' ? 'caos' : 'normal';
+const CAOS_IDX = MAPAS.findIndex(m => m.caos);
+
 // Mapa ativo (lido uma vez no load; trocar = gravar localStorage + recarregar).
+// No modo caos o mapa é sempre o do caos; no normal, a seleção salva (nunca o caos).
 export const MAPA_IDX = (() => {
+  if (MODO === 'caos') return CAOS_IDX;
   const i = parseInt(localStorage.getItem('kd-mapa'), 10);
-  return i >= 0 && i < MAPAS.length ? i : 0;
+  return i >= 0 && i < MAPAS.length && !MAPAS[i].caos ? i : 0;
 })();
 const M = MAPAS[MAPA_IDX];
 
@@ -93,6 +175,7 @@ export const RECORTE_CASTELO = M.recorte;
 export const ROTAS = M.rotas;
 export const SITES = M.sites.map(s => ({ ...s, construcao: null }));
 export const PLATAFORMAS = M.plataformas.map(([x, y]) => ({ x, y, torre: null }));
+export const LAB_POS = M.lab || null;   // posição do laboratório (só no mapa caos)
 const PORTAIS = M.portais;
 
 // ---------- Geometria auxiliar ----------
