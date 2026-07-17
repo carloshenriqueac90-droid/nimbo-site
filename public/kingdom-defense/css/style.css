@@ -4,7 +4,7 @@
 html, body {
   margin: 0; padding: 0;
   height: 100%;
-  background: #1c2418;
+  background: #0b0d09;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   overflow: hidden;
   touch-action: manipulation;
@@ -21,56 +21,89 @@ html, body {
   justify-content: center;
 }
 
+/* arena envolve o canvas exatamente: todo o HUD fica DENTRO do mapa */
+#arena { position: relative; line-height: 0; }
+#arena > * { line-height: normal; }
+
 #tela { display: block; }
 
-/* ---------- HUD superior ---------- */
+/* moldura em volta do jogo: estica sobre a arena inteira (mapa + padding das
+   vigas); o mapa fica dentro da abertura, com leve encaixe sob a madeira. */
+#moldura-jogo {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  -webkit-user-drag: none;
+}
+
+/* ---------- HUD superior: um grupo centralizado em cada lado da viga ---------- */
 #hud-top {
   position: absolute;
   top: 0; left: 0; right: 0;
+  height: var(--molde-topo, 34px);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: calc(6px + env(safe-area-inset-top)) 8px 6px;
+  padding: 0 1.4%;
   pointer-events: none;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  z-index: 10;
 }
-.icone-hud { width: 18px; height: 18px; object-fit: contain; }
+.hud-lado {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+.icone-hud { width: 1.25em; height: 1.25em; object-fit: contain; }
 .icone-inline { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
 .chip {
   background: rgba(12, 18, 10, 0.82);
   color: #f2ead8;
   border-radius: 14px;
-  padding: 4px 10px;
-  font-size: 14px;
+  padding: 2px 9px;
+  font-size: clamp(10px, 2.4vmin, 14px);
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 4px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
 }
-#chip-onda { margin-left: auto; }
 #btnMudo {
   border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
   pointer-events: auto;
-  min-height: 32px;
-  min-width: 32px;
 }
 #btnMudo:active { transform: scale(0.94); }
 #sliderVolume {
   pointer-events: auto;
-  width: 76px;
+  width: clamp(46px, 9vmin, 76px);
   accent-color: #6fcf4f;
   cursor: pointer;
 }
+/* info da onda: bloco centralizado logo abaixo da moldura de cima */
+#hud-onda {
+  position: absolute;
+  top: calc(var(--molde-topo, 34px) + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  z-index: 10;
+  pointer-events: none;
+}
 #barra-onda-fundo {
-  flex-basis: 100%;
+  width: clamp(96px, 24vmin, 190px);
   height: 5px;
   background: rgba(12, 18, 10, 0.7);
   border-radius: 3px;
   overflow: hidden;
-  max-width: 320px;
-  margin: 0 auto;
 }
 #barraOnda {
   height: 100%;
@@ -80,38 +113,58 @@ html, body {
   transition: width 0.3s;
 }
 
-/* ---------- HUD inferior ---------- */
-#hud-bottom {
+/* ---------- Barra inferior: arte cortada + hotspots clicáveis ---------- */
+#barraInferior {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  display: flex;
-  gap: 8px;
-  padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
-  justify-content: center;
-  flex-wrap: wrap;
-  background: linear-gradient(transparent, rgba(10, 14, 8, 0.75));
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(46%, 400px);
+  pointer-events: none;
+  z-index: 12;
 }
-#hud-bottom button {
-  min-height: 46px;
-  padding: 8px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: #2c3a24;
-  color: #f2ead8;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-#hud-bottom button:active:not(:disabled) { transform: scale(0.96); }
-#hud-bottom button:disabled { opacity: 0.4; cursor: default; }
-#btnOnda { background: #3d6a2e; }
-#btnRecuar { background: #7a3b2e; }
-#btnRecuar.alerta { animation: pulsar 0.8s infinite alternate; }
-#btnRetomar { background: #2e5d7a; }
+#barraInferior .menu-fundo { width: 100%; height: auto; display: block; pointer-events: none; -webkit-user-drag: none; }
+/* hotspots medidos das marcações vermelhas do Gabriel (ui - Copia/) */
+#barraInferior .menu-hot { top: 60.4%; width: 17%; height: 44%; pointer-events: auto; }
+/* posições (centro) dos 5 slots da barra normal (imagem cortada ao conteúdo) */
+.pos-1 { left: 17.2%; }
+.pos-2 { left: 35.5%; }
+.pos-3 { left: 53.7%; }
+.pos-4 { left: 71.7%; }
+.pos-5 { left: 88.4%; }
+/* modo caos: barra de 3 slots, sem recuar/retomar */
+#barraInferior.caos { width: min(33%, 300px); }
+#barraInferior.caos .pos-1, #barraInferior.caos .pos-4 { display: none; }
+#barraInferior.caos .menu-hot { width: 24%; height: 46%; top: 58.5%; }
+#barraInferior.caos .pos-2 { left: 22.8%; }
+#barraInferior.caos .pos-3 { left: 49.9%; }
+#barraInferior.caos .pos-5 { left: 77.1%; }
+/* realces de estado dos botões da barra */
+#btnVel.ativo::after { border-color: rgba(255,200,80,.65); box-shadow: inset 0 0 14px rgba(255,200,80,.55); }
+#btnRecuar.alerta::after { animation: pulsar 0.8s infinite alternate; }
 @keyframes pulsar {
-  from { box-shadow: 0 0 0 0 rgba(255, 90, 60, 0.9); }
-  to { box-shadow: 0 0 0 9px rgba(255, 90, 60, 0); }
+  from { box-shadow: inset 0 0 4px rgba(255, 90, 60, .4); }
+  to { box-shadow: inset 0 0 16px rgba(255, 90, 60, .8); }
 }
+/* contagem regressiva (tempo real): pílula flutuando acima do botão de onda */
+#lblOnda {
+  position: absolute;
+  left: 50%; top: -9%;
+  transform: translate(-50%, -50%);
+  background: rgba(14, 18, 10, .9);
+  border: 1px solid rgba(255, 215, 120, .4);
+  border-radius: 9px;
+  padding: 1px 9px;
+  font-size: clamp(9px, 2.3vmin, 13px);
+  font-weight: 800;
+  color: #ffe9a8;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 3;
+}
+#barraInferior.caos #lblOnda { left: 50%; }
+#lblOnda:empty { display: none; }
 
 /* ---------- Menu de contexto ---------- */
 #menuContexto {
@@ -169,7 +222,7 @@ html, body {
 .toast.perigo { color: #ff8a7a; border-color: rgba(255, 90, 60, 0.5); }
 .toast.oculto { opacity: 0; }
 
-/* ---------- Overlay (início / fim) ---------- */
+/* ---------- Overlay (telas centrais: modo / pausa / intro / fim) ---------- */
 #overlay {
   position: absolute;
   inset: 0;
@@ -177,58 +230,192 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 14, 8, 0.85);
-  padding: 16px;
+  background: rgba(8, 11, 6, 0.9);
+  padding: 12px;
 }
-.painel {
-  background: #212c19;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  border-radius: 16px;
-  padding: 22px 24px;
-  max-width: 420px;
-  width: 100%;
-  color: #f2ead8;
+#overlay .menu-img { max-height: 94dvh; }
+#overlay .menu-img .menu-fundo { max-height: 94dvh; max-width: 94vw; }
+/* cartão simples (vitória) */
+.aviso {
+  background: linear-gradient(#1a2414, #0e1509);
+  border: 2px solid rgba(255, 215, 120, .4);
+  border-radius: 18px;
+  padding: 26px 30px;
+  max-width: 88vw;
   text-align: center;
-  max-height: 90dvh;
-  overflow-y: auto;
-}
-.painel h1 { margin: 0 0 4px; font-size: 26px; color: #ffd166; }
-.painel h2 { margin: 0 0 12px; font-size: 15px; font-weight: 400; opacity: 0.8; }
-.painel ul { text-align: left; font-size: 14px; line-height: 1.55; padding-left: 20px; margin: 10px 0 16px; }
-.painel .recorde { font-size: 13px; opacity: 0.75; margin-bottom: 12px; }
-.painel .rotulo-mapa { font-size: 13px; opacity: 0.8; margin: 4px 0 8px; text-align: left; }
-.mapas { display: flex; gap: 10px; margin-bottom: 16px; }
-.card-mapa {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
-  min-height: 76px;
-  border-radius: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  background: #2c3a24;
   color: #f2ead8;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
 }
-.card-mapa.ativo { border-color: #ffd166; background: #3d5230; }
-.card-mapa:active { transform: scale(0.96); }
-.card-icone { font-size: 28px; }
-.card-nome { font-size: 13px; font-weight: 700; }
-.painel button {
-  min-height: 50px;
-  width: 100%;
-  border-radius: 12px;
+.aviso h1 { margin: 0 0 8px; font-size: clamp(20px, 5vmin, 26px); color: #ffd166; }
+.aviso p { margin: 6px 0 18px; font-size: clamp(13px, 3vmin, 15px); opacity: .85; line-height: 1.4; }
+.aviso button {
+  min-height: 46px; padding: 0 26px;
+  border: none; border-radius: 12px;
+  background: #3d6a2e; color: #fff;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+}
+.aviso button:active { transform: scale(.96); }
+
+/* ---------- Painel de slots (laboratório / mina), sobre o mapa ---------- */
+#painelMenu {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 35;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6));
+}
+#painelMenu .menu-fundo { width: min(88vw, 560px); max-height: 84dvh; }
+#painelMenu.mini .menu-fundo { width: min(56vw, 330px); }
+#painelMenu.peq .menu-fundo { width: min(62vw, 370px); }
+
+/* ---------- Sistema de menu por imagem (arte + botões clicáveis) ---------- */
+.menu-img { position: relative; display: inline-block; line-height: 0; }
+.menu-img .menu-fundo { display: block; height: auto; -webkit-user-drag: none; }
+
+/* botão de fechar (X) no canto superior direito dos painéis centrais */
+.menu-fechar {
+  position: absolute;
+  top: -10px; right: -10px;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(#4a2018, #2a110b);
+  color: #ffdcc8;
+  border: 2px solid rgba(255, 190, 130, .6);
+  border-radius: 50%;
+  font-size: 17px; font-weight: 900; line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 2px 9px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .12);
+  z-index: 8;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-fechar:active { transform: scale(.9); }
+@media (hover: hover) {
+  .menu-fechar:hover { background: linear-gradient(#5c2a1f, #35160e); border-color: rgba(255, 210, 160, .85); }
+}
+
+.menu-hot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: none;
   border: none;
-  background: #3d6a2e;
-  color: #fff;
-  font-size: 17px;
-  font-weight: 800;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 2;
 }
-.painel button:active { transform: scale(0.97); }
+.menu-hot::after {           /* realce CONTIDO dentro do botão (não vaza pra fora) */
+  content: '';
+  position: absolute; inset: 4%;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 2px solid transparent;
+  transition: box-shadow .12s, background-color .1s, border-color .12s;
+}
+@media (hover: hover) {
+  .menu-hot:hover:not(.desab)::after {
+    background: rgba(255, 226, 140, .12);
+    border-color: rgba(255, 219, 130, .55);
+    box-shadow: inset 0 0 12px rgba(255, 215, 120, .45);
+  }
+}
+.menu-hot:active:not(.desab) { transform: translate(-50%, -50%) scale(.95); }
+.menu-hot:active:not(.desab)::after {
+  background: rgba(255, 233, 165, .28);
+  border-color: rgba(255, 210, 110, .7);
+  box-shadow: inset 0 0 16px rgba(255, 200, 90, .6);
+}
+.menu-hot.desab, .menu-hot:disabled { cursor: default; }
+.menu-hot.desab::after, .menu-hot:disabled::after {
+  inset: 0;
+  background: rgba(4, 6, 3, .55);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* botão VISÍVEL dentro de uma moldura vazada (ex.: upgrade de torre) */
+.menu-hot.btn {
+  background: linear-gradient(#3a5a2a, #23401a);
+  border: 2px solid rgba(255, 215, 120, .5);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 3px 9px rgba(0, 0, 0, .55);
+  display: flex; align-items: center; justify-content: center;
+}
+.menu-hot.btn.desab { filter: grayscale(.75) brightness(.55); }
+.menu-hot-rotulo {
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(11px, 2.9vmin, 16px);
+  text-align: center;
+  line-height: 1.18;
+  text-shadow: 0 1px 2px #000;
+  padding: 0 10px;
+}
+.menu-hot-rotulo .icone-inline { width: 1em; height: 1em; vertical-align: -0.15em; }
+
+/* texto vivo sobre a arte (cobre e substitui números estáticos) */
+.menu-vivo {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: #ffe9a8;
+  font-weight: 800;
+  font-size: clamp(9px, 2.5vmin, 15px);
+  text-shadow: 0 1px 2px #000, 0 0 5px #000;
+  pointer-events: none;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.1;
+  z-index: 3;
+}
+.menu-vivo .icone-inline { width: 1em; height: 1em; vertical-align: -0.15em; }
+.menu-vivo.placa {           /* plaquinha escura que esconde o número estático embaixo */
+  background: linear-gradient(#15120c, #0c0a06);
+  border: 1px solid rgba(255, 215, 120, .3);
+  border-radius: 9px;
+  padding: 4px 14px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, .7);
+  color: #f0dfa8;
+  font-weight: 700;
+  font-size: clamp(9px, 2.3vmin, 14px);
+}
+.menu-vivo.placa.alta { padding-top: 16px; padding-bottom: 16px; }
+.menu-vivo.custo { color: #ffe08a; font-weight: 800; font-size: clamp(8px, 2.1vmin, 13px); }
+.menu-vivo.trava { color: #c9b6ff; }
+
+/* tooltip: aparece ao pousar o mouse, com atraso */
+.menu-tip {
+  position: absolute;
+  left: 50%; bottom: 108%;
+  transform: translateX(-50%);
+  width: max-content;
+  min-width: 110px; max-width: 230px;
+  background: rgba(13, 17, 9, .98);
+  color: #f2ead8;
+  border: 1px solid rgba(255, 215, 0, .45);
+  border-radius: 10px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.32;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s;
+  z-index: 60;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .55);
+}
+.menu-tip b { color: #ffd166; }
+.menu-tip .icone-inline { width: 13px; height: 13px; vertical-align: -2px; }
+@media (hover: hover) {
+  /* o botão sob o mouse sobe acima dos outros e do texto vivo, p/ a tooltip
+     nunca ficar escondida atrás de outra informação */
+  .menu-hot:hover { z-index: 40; }
+  .menu-hot:hover .menu-tip { opacity: 1; visibility: visible; transition-delay: .65s; }
+}
 
 .oculto { display: none !important; }
 
