@@ -35,7 +35,8 @@ export function atualizarHUD(state, totalOndas) {
   }
 
   // botões de imagem: só habilitação/realce; a contagem vai no rótulo
-  els.btnOnda.disabled = state.fase !== 'preparo';
+  // sem travamento durante a onda: só desabilita fora do jogo ou quando todas as ondas já foram chamadas
+  els.btnOnda.disabled = (state.fase !== 'preparo' && state.fase !== 'onda') || state.onda >= totalOndas;
   els.lblOnda.textContent = state.fase === 'preparo' ? `${Math.ceil(state.tPreparo)}s` : '';
   els.btnVel.classList.toggle('ativo', state.velocidade !== 1);
   els.btnRecuar.disabled = state.recuados || state.trabalhadores.length === 0;

@@ -26,12 +26,13 @@ import { iniciarAudio, tocar, mutado, alternarMudo, obterVolume, definirVolume }
 const state = {
   fase: 'inicio', // inicio | preparo | onda | derrota | vitoria
   vidas: JOGO.vidas,
-  ouro: MAPA_IDX === 1 ? JOGO.ouroInicial * 2 : JOGO.ouroInicial,  // 2º nível começa com o dobro de ouro
+  ouro: CAOS_MODO ? JOGO.ouroInicial : 600,  // todos os modos normais começam com 600; caos mantém o padrão
   madeira: JOGO.madeiraInicial,
-  coletaOuro: COLETA.ouroInicial,      // ouro por viagem: começa 5 nos dois modos (melhorável)
+  coletaOuro: CAOS_MODO ? COLETA.ouroInicial : COLETA.ouroInicialNormal,  // ouro por viagem: 5 no caos / 7 no normal (melhorável)
   coletaMadeira: CAOS_MODO ? COLETA.madeiraInicial : COLETA.madeiraInicialNormal, // madeira: 3 no caos / 5 no normal (melhorável)
   labConstruido: false, // no caos o laboratório precisa ser erguido (1000 ouro)
   onda: 0,             // última onda iniciada (1..10)
+  ondaPaga: 0,         // última onda cuja recompensa já foi paga (p/ rush de ondas)
   tPreparo: JOGO.tempoPreparoInicial,
   velocidade: 1,
   escalaHP: 1,
@@ -111,14 +112,22 @@ function textoCusto(custo) {
 
 // ---------------------------------------------------------- Fases
 function iniciarOnda() {
-  if (state.fase !== 'preparo') return;
+  // sem travamento: pode chamar a próxima onda no preparo OU no meio de uma onda
+  // (os inimigos empilham). No normal, no máximo TOTAL_ONDAS chamadas; no caos é infinito.
+  if (state.fase !== 'preparo' && state.fase !== 'onda') return;
+  if (state.onda >= TOTAL_ONDAS) return;
   tocar('onda_inicio', { volume: 0.6 });
   state.onda++;
-  state.escalaHP = 1 + (state.onda - 1) * JOGO.escalaHPPorOnda;
+  const esc = 1 + (state.onda - 1) * JOGO.escalaHPPorOnda;
+  state.escalaHP = esc;   // usado pelo invoca do Rei Goblin
   const def = CAOS_MODO ? gerarOndaCaos(state.onda) : ONDAS[state.onda - 1];
-  state.spawner = new Spawner(def);
-  state.fase = 'onda';
-  state.perigoCacadores = def.especial;
+  if (state.fase === 'onda' && state.spawner) {
+    state.spawner.merge(def, esc);          // empilha na onda em andamento
+  } else {
+    state.spawner = new Spawner(def, esc);
+    state.fase = 'onda';
+  }
+  state.perigoCacadores = state.perigoCacadores || !!def.especial;
   fecharMenu();
   state.selecionado = null;
   if (def.especial) {
@@ -134,10 +143,13 @@ function fimDeOnda() {
   tocar('onda_vitoria', { volume: 0.55 });
   state.spawner = null;
   state.perigoCacadores = false;
-  state.ouro += JOGO.bonusOndaOuro;
-  state.madeira += JOGO.bonusOndaMadeira;
-  efeitoTexto(state, CASTELO.x - 14, CASTELO.y - 80, `Bonus: +${JOGO.bonusOndaOuro}`, '#ffd166', 'icone_ouro');
-  efeitoTexto(state, CASTELO.x + 6, CASTELO.y - 60, `+${JOGO.bonusOndaMadeira}`, '#c98d4b', 'icone_madeira');
+  const limpas = Math.max(1, state.onda - state.ondaPaga);  // ondas vencidas neste lote (rush = várias)
+  state.ondaPaga = state.onda;
+  const bO = JOGO.bonusOndaOuro * limpas, bM = JOGO.bonusOndaMadeira * limpas;
+  state.ouro += bO;
+  state.madeira += bM;
+  efeitoTexto(state, CASTELO.x - 14, CASTELO.y - 80, `Bonus: +${bO}`, '#ffd166', 'icone_ouro');
+  efeitoTexto(state, CASTELO.x + 6, CASTELO.y - 60, `+${bM}`, '#c98d4b', 'icone_madeira');
   state.save.melhorOnda = Math.max(state.save.melhorOnda, state.onda);
   gravarSave(state.save);
   if (state.onda >= TOTAL_ONDAS) { vitoria(); return; }
@@ -332,15 +344,22 @@ function menuContratar(site) {
     ? { img: 'painel_mina',    s: [30.2, 70.0], cy: 55.3, w: 33,   h: 44,   ty: 73 }
     : { img: 'painel_madeira', s: [29.2, 70.2], cy: 49,   w: 33,   h: 33,   ty: 61 };
 
-  // Melhoria de coleta, nos DOIS modos: ouro (5→20 caos / 5→15 normal) e
-  // madeira (3→12 caos / 5→10 normal) — cada modo com seu próprio teto/base.
+  // Melhoria de coleta, nos DOIS modos: ouro (5→20 caos / 7→15 normal) e
+  // madeira (3→15 caos / 5→10 normal) — cada modo com seu próprio teto/base.
   const ouro = def.recurso === 'ouro';
-  const inicialC = ouro ? COLETA.ouroInicial : (CAOS_MODO ? COLETA.madeiraInicial : COLETA.madeiraInicialNormal);
+  const inicialC = ouro
+    ? (CAOS_MODO ? COLETA.ouroInicial : COLETA.ouroInicialNormal)
+    : (CAOS_MODO ? COLETA.madeiraInicial : COLETA.madeiraInicialNormal);
   const nivel = () => (ouro ? state.coletaOuro : state.coletaMadeira);
   const max = ouro
     ? (CAOS_MODO ? COLETA.ouroMax : COLETA.ouroMaxNormal)
     : (CAOS_MODO ? COLETA.madeiraMax : COLETA.madeiraMaxNormal);
-  const custoC = () => (ouro ? COLETA.custoOuro(nivel(), inicialC) : COLETA.custoMadeira(nivel(), inicialC));
+  // mapas normais: metade do preço para melhorar a coleta (ouro e madeira); caos mantém
+  const fatorPreco = CAOS_MODO ? 1 : 0.5;
+  const custoC = () => {
+    const c = ouro ? COLETA.custoOuro(nivel(), inicialC) : COLETA.custoMadeira(nivel(), inicialC);
+    return { ouro: Math.round(c.ouro * fatorPreco) };
+  };
   const noMax = () => nivel() >= max;
   hots.push({
     cx: geo.s[0], cy: geo.cy, w: geo.w, h: geo.h,

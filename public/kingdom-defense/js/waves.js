@@ -186,11 +186,18 @@ const ONDAS_MAPA3 = [
 export const ONDAS_POR_MAPA = [ONDAS_MAPA1, ONDAS_MAPA2, ONDAS_MAPA3];
 
 export class Spawner {
-  constructor(def) {
+  constructor(def, escala = 1) {
     this.especial = !!def.especial;
-    this.grupos = def.grupos.map(g => ({ ...g, spawned: 0, t: g.atraso || 0 }));
+    this.grupos = def.grupos.map(g => ({ ...g, spawned: 0, t: g.atraso || 0, esc: escala * (g.mult || 1) }));
     this.terminou = false;
     this.total = def.grupos.reduce((s, g) => s + g.qtd, 0);
+  }
+  // empilha os grupos de outra onda no mesmo spawner (rush: chamar a próxima
+  // onda sem esperar a atual terminar — cada onda mantém sua própria escala de HP).
+  merge(def, escala = 1) {
+    for (const g of def.grupos) this.grupos.push({ ...g, spawned: 0, t: g.atraso || 0, esc: escala * (g.mult || 1) });
+    this.total += def.grupos.reduce((s, g) => s + g.qtd, 0);
+    this.terminou = false;
   }
   update(dt, state) {
     let ativos = false;
@@ -199,7 +206,7 @@ export class Spawner {
       ativos = true;
       g.t -= dt;
       while (g.t <= 0 && g.spawned < g.qtd) {
-        state.inimigos.push(new Inimigo(g.tipo, g.rota, state.escalaHP * (g.mult || 1)));
+        state.inimigos.push(new Inimigo(g.tipo, g.rota, g.esc));
         g.spawned++;
         g.t += Math.max(g.intervalo, 0.001);
       }

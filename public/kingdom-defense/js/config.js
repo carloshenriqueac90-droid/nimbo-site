@@ -47,8 +47,8 @@ export const JOGO = {
   vidas: 20,
   ouroInicial: 300,
   madeiraInicial: 60,
-  bonusOndaOuro: 40,
-  bonusOndaMadeira: 12,
+  bonusOndaOuro: 60,   // +50% (era 40)
+  bonusOndaMadeira: 18, // +50% (era 12)
   escalaHPPorOnda: 0.15,   // +15% HP por onda
   tempoPreparo: 30,        // countdown entre ondas
   tempoPreparoInicial: 60,
@@ -122,7 +122,7 @@ export const LAB = {
 // Coleta de recursos melhorável de 1 em 1 no menu da construção.
 // Ouro: começa em 5 nos DOIS modos — máx 20 no caos, máx 15 no normal.
 export const COLETA = {
-  ouroInicial: 5,     ouroMax: 20,    ouroMaxNormal: 15,
+  ouroInicial: 5,     ouroMax: 20,    ouroMaxNormal: 15,   ouroInicialNormal: 7,
   madeiraInicial: 3,  madeiraMax: 15, madeiraInicialNormal: 5, madeiraMaxNormal: 10,
   // custo (em ouro) do próximo +1, subindo com o nível atual de coleta.
   // "inicial" = ponto de partida do modo ativo (caos e normal começam em níveis diferentes).
